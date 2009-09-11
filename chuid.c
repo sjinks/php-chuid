@@ -23,6 +23,7 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * @brief INI File Entries
  *
  * <TABLE>
+ * <TR><TD>@c chuid.enabled</TD><TD>@c bool</TD><TD>Whether this extension should be enabled</TD></TR>
  * <TR><TD>@c chuid.disable_posix_setuid_family</TD><TD>@c bool</TD><TD>Disables @c posix_seteuid(), @c posix_setegid(), @c posix_setuid() and @c posix_setgid() functions</TD></TR>
  * <TR><TD>@c chuid.never_root</TD><TD>@c bool</TD><TD>Forces the change to the @c default_uid/@c default_gid of the UID/GID computes to be 0 (root)</TD></TR>
  * <TR><TD>@c chuid.cli_disable</TD><TD>@c bool</TD><TD>Do not try to modify UIDs/GIDs when SAPI is CLI</TD></TR>
@@ -33,6 +34,7 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * </TABLE>
  */
 PHP_INI_BEGIN()
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM, OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
@@ -64,6 +66,10 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif
 
 	REGISTER_INI_ENTRIES();
+
+	if (0 == CHUID_G(enabled)) {
+		return SUCCESS;
+	}
 
 	be_secure = CHUID_G(be_secure);
 	severity = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;

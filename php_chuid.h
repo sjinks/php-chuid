@@ -91,6 +91,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	uid_t euid;               /**< Saved Effective User ID */
 	gid_t rgid;               /**< Saved Real Group ID */
 	gid_t egid;               /**< Saved Effective Group ID */
+	zend_bool enabled;        /**< Whether to enable this extension */
 	zend_bool disable_setuid; /**< Whether to disable posix_set{e,}{u,g}id() functions */
 	zend_bool active;         /**< Internal flag */
 	zend_bool never_root;     /**< Never run the request as root */
