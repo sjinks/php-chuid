@@ -1,12 +1,13 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.2
+ * @version 0.3
  * @brief Helper functions — implementation
  */
 
 #include "helpers.h"
 #include "caps.h"
+#include "compatibility.h"
 
 /**
  * @details Disables @c posix_setegid(), @c posix_seteuid(), @c posix_setgid() and @c posix_setuid() functions
@@ -56,7 +57,13 @@ int do_global_chroot(int can_chroot)
 	return SUCCESS;
 }
 
-void who_is_mr_nobody(uid_t* uid, gid_t* gid)
+/**
+ * @brief Finds out the UID and GID of @c nobody user.
+ * @param uid UID
+ * @param gid GID
+ * @warning If @c getpwnam("nobody") fails, @c uid and @c gid remain unchanged
+ */
+static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
 {
 	struct passwd* pwd = getpwnam("nobody");
 	if (NULL != pwd) {
@@ -66,4 +73,124 @@ void who_is_mr_nobody(uid_t* uid, gid_t* gid)
 	else {
 		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
 	}
+}
+
+/**
+ * @brief Sets RUID/EUID/SUID and RGID/EGID/SGID
+ * @param uid Real and Effective UID
+ * @param gid Real and Effective GID
+ * @param method Which method should be used to set UIDs and GIDs
+ * @return Whether calls to <code>my_setgids()</code>/<code>my_setuids()</code> were successful
+ * @retval SUCCESS OK
+ * @retval FAILURE Failure
+ *
+ * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
+ */
+static int do_set_guids(uid_t uid, gid_t gid, int method)
+{
+	int res;
+
+	res = my_setgids(gid, gid, 0, method);
+	if (0 != res) {
+		PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, 0): %s", gid, gid, strerror(errno));
+		return FAILURE;
+	}
+
+	res = my_setuids(uid, uid, 0, method);
+	if (0 != res) {
+		PHPCHUID_ERROR(E_CORE_ERROR, "my_setuids(%d, %d, 0): %s", uid, uid, strerror(errno));
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+/**
+ * @brief Sets the default {R,E}UID/{R,E}GID according to the INI settings
+ * @param method Which method should be used to set UIDs and GIDs
+ * @return Whether call to @c do_set_guids() succeeded
+ * @retval SUCCESS OK
+ * @retval FAILURE Failure
+ * @see do_set_guids(), who_is_mr_nobody()
+ * @note If the default UID is 65534, @c nobody user is assumed and its UID/GID are refined by @c who_is_mr_nobody()
+ */
+static int set_default_guids(int method)
+{
+	gid_t default_gid = (gid_t)CHUID_G(default_gid);
+	uid_t default_uid = (uid_t)CHUID_G(default_uid);
+
+	if (65534 == default_uid) {
+		who_is_mr_nobody(&default_uid, &default_gid);
+	}
+
+	return do_set_guids(default_uid, default_gid, method);
+}
+
+/**
+ * @see set_default_guids()
+ * @details Tries to change {R,E}{U,G}ID to the owner of the @c DOCUMENT_ROOT. If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
+ */
+int change_uids(int method TSRMLS_DC)
+{
+	char* docroot;
+	int res;
+	struct stat statbuf;
+	uid_t uid;
+	gid_t gid;
+
+
+	if (NULL != sapi_module.getenv) {
+		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
+	}
+	else {
+		docroot = NULL;
+	}
+
+	if (NULL == docroot) {
+		return set_default_guids(method);
+	}
+
+	res = stat(docroot, &statbuf);
+	if (0 != res) {
+		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot, strerror(errno));
+		return set_default_guids(method);
+	}
+
+	uid = statbuf.st_uid;
+	gid = statbuf.st_gid;
+
+	if (0 != CHUID_G(never_root)) {
+		if (0 == uid) uid = (uid_t)CHUID_G(default_uid);
+		if (0 == gid) gid = (gid_t)CHUID_G(default_gid);
+	}
+
+	return do_set_guids(uid, gid, method);
+}
+
+static int ptr_compare_func(void* p1, void* p2)
+{
+	return p1 == p2;
+}
+
+void chuid_zend_extension_register(zend_extension* new_extension, DL_HANDLE handle)
+{
+	zend_extension extension;
+
+	extension = *new_extension;
+	extension.handle = handle;
+
+	zend_extension_dispatch_message(ZEND_EXTMSG_NEW_EXTENSION, &extension);
+
+	zend_llist_add_element(&zend_extensions, &extension);
+}
+
+int chuid_zend_remove_extension(zend_extension* extension)
+{
+	llist_dtor_func_t dtor;
+
+	dtor = zend_extensions.dtor; /* avoid dtor */
+	zend_extensions.dtor = NULL;
+	zend_llist_del_element(&zend_extensions, extension, ptr_compare_func);
+	zend_extensions.dtor = dtor;
+	return SUCCESS;
 }

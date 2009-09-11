@@ -1,20 +1,19 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.2
+ * @version 0.3
  * @brief PHP CHUID Module
  */
 
 #include "php_chuid.h"
-#include <php5/main/SAPI.h>
 #include <php5/ext/standard/info.h>
 #include "compatibility.h"
 #include "caps.h"
 #include "helpers.h"
+#include "extension.h"
 
 zend_bool be_secure = 1;          /**< Whether we should turn startup warnings to errors */
-static zend_bool sapi_is_cli = 0; /**< Whether SAPI is CLI */
-static zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
+zend_bool chuid_module_gotup = 0; /**< Whether the module has started up */
 
 /**
  * @brief Module globals
@@ -45,103 +44,6 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 
 /**
- * @brief Sets RUID/EUID/SUID and RGID/EGID/SGID
- * @param uid Real and Effective UID
- * @param gid Real and Effective GID
- * @param method Which method should be used to set UIDs and GIDs
- * @return Whether calls to <code>my_setgids()</code>/<code>my_setuids()</code> were successful
- * @retval SUCCESS OK
- * @retval FAILURE Failure
- *
- * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
- */
-static int do_set_guids(uid_t uid, gid_t gid, int method)
-{
-	int res;
-
-	res = my_setgids(gid, gid, 0, method);
-	if (0 != res) {
-		PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, 0): %s", gid, gid, strerror(errno));
-		return FAILURE;
-	}
-
-	res = my_setuids(uid, uid, 0, method);
-	if (0 != res) {
-		PHPCHUID_ERROR(E_CORE_ERROR, "my_setuids(%d, %d, 0): %s", uid, uid, strerror(errno));
-		return FAILURE;
-	}
-
-	return SUCCESS;
-}
-
-/**
- * @brief Sets the default {R,E}UID/{R,E}GID according to the INI settings
- * @param method Which method should be used to set UIDs and GIDs
- * @return Whether call to @c do_set_guids() succeeded
- * @retval SUCCESS OK
- * @retval FAILURE Failure
- * @see do_set_guids(), who_is_mr_nobody()
- * @note If the default UID is 65534, @c nobody user is assumed and its UID/GID are refined by @c who_is_mr_nobody()
- */
-static int set_default_guids(int method)
-{
-	gid_t default_gid = (gid_t)CHUID_G(default_gid);
-	uid_t default_uid = (uid_t)CHUID_G(default_uid);
-
-	if (65534 == default_uid) {
-		who_is_mr_nobody(&default_uid, &default_gid);
-	}
-
-	return do_set_guids(default_uid, default_gid, method);
-}
-
-/**
- * @brief Changes {R,E}UID/{R,E}GID to the owner of the DOCUMENT_ROOT
- * @return Whether operation succeeded
- * @retval SUCCESS OK
- * @retval FAILURE Failure
- * @see set_default_guids()
- *
- * Tries to change {R,E}{U,G}ID to the owner of the @c DOCUMENT_ROOT. If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
- */
-static int change_uids(int method TSRMLS_DC)
-{
-	char* docroot;
-	int res;
-	struct stat statbuf;
-	uid_t uid;
-	gid_t gid;
-
-
-	if (NULL != sapi_module.getenv) {
-		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
-	}
-	else {
-		docroot = NULL;
-	}
-
-	if (NULL == docroot) {
-		return set_default_guids(method);
-	}
-
-	res = stat(docroot, &statbuf);
-	if (0 != res) {
-		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot, strerror(errno));
-		return set_default_guids(method);
-	}
-
-	uid = statbuf.st_uid;
-	gid = statbuf.st_gid;
-
-	if (0 != CHUID_G(never_root)) {
-		if (0 == uid) uid = (uid_t)CHUID_G(default_uid);
-		if (0 == gid) gid = (gid_t)CHUID_G(default_gid);
-	}
-
-	return do_set_guids(uid, gid, method);
-}
-
-/**
  * @brief Module Initialization Routine
  * @param type
  * @param module_number
@@ -158,8 +60,23 @@ static PHP_MINIT_FUNCTION(chuid)
 	int severity;
 	int retval;
 
-	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
+	if (1 == chuid_module_gotup) {
+		return SUCCESS;
+	}
+
+#ifdef DEBUG
+	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
+#endif
+
+	chuid_module_gotup = 1;
+
+	if (0 == chuid_zend_extension_gotup) {
+#ifdef DEBUG
+		fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Registering Zend extension");
+#endif
+		chuid_zend_extension_register(&zend_extension_entry, 0);
+		chuid_zend_extension_faked = 1;
+	}
 
 	REGISTER_INI_ENTRIES();
 
@@ -208,67 +125,22 @@ static PHP_MINIT_FUNCTION(chuid)
  */
 static PHP_MSHUTDOWN_FUNCTION(chuid)
 {
+#ifdef DEBUG
+	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MSHUTDOWN");
+#endif
+
+	if (0 != chuid_zend_extension_faked) {
+		zend_extension* ext = zend_get_extension(PHP_CHUID_EXTNAME);
+		if (NULL != ext) {
+			if (NULL != ext->shutdown) {
+				ext->shutdown(ext);
+			}
+
+			chuid_zend_remove_extension(ext);
+		}
+    }
+
 	UNREGISTER_INI_ENTRIES();
-
-	return SUCCESS;
-}
-
-/**
- * @brief Request Initialization Routine
- * @param type
- * @param module_number
- * @return Whether initialization was successful
- * @retval SUCCESS Yes
- * @retval FAILURE No
- *
- * This is wahat the extension was written for :-) This function changes UIDs and GIDs (if INI settings permit).
- * Inability to change UIDs or GUIDs is always considered an error and request is terminated
- */
-static PHP_RINIT_FUNCTION(chuid)
-{
-	if (1 == CHUID_G(active)) {
-		int method = 1;
-		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
-			method = 0;
-			CHUID_G(active) = 0;
-		}
-
-		return change_uids(method);
-	}
-
-	return SUCCESS;
-}
-
-/**
- * @brief Request Shutdown Routine
- * @param type
- * @param module_number
- * @return Whether shutdown was successful
- * @retval SUCCESS Yes
- * @retval FAILURE No
- *
- * Restores UIDs and GIDs to their original values after the request has been processed.
- * Original UID/GID values are kept in @c chuid_globals (saved during Globals Construction)
- */
-static PHP_RSHUTDOWN_FUNCTION(chuid)
-{
-	if (1 == CHUID_G(active)) {
-		int res;
-		uid_t ruid = CHUID_G(ruid);
-		uid_t euid = CHUID_G(euid);
-		gid_t rgid = CHUID_G(rgid);
-		gid_t egid = CHUID_G(egid);
-
-		res = my_setuids(ruid, euid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
-		}
-
-		res = my_setgids(rgid, egid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
-		}
-	}
 
 	return SUCCESS;
 }
@@ -281,6 +153,10 @@ static PHP_RSHUTDOWN_FUNCTION(chuid)
  */
 static PHP_GINIT_FUNCTION(chuid)
 {
+#ifdef DEBUG
+	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "GINIT");
+#endif
+
 	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
 	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
 	chuid_globals->active = 0;
@@ -304,6 +180,42 @@ static PHP_MINFO_FUNCTION(chuid)
 }
 
 /**
+ * @brief Request Post Deactivate Routine
+ * @return Whether shutdown was successful
+ * @retval SUCCESS Yes
+ * @retval FAILURE No
+ *
+ * Restores UIDs and GIDs to their original values after the request has been processed.
+ * Original UID/GID values are kept in @c chuid_globals (saved during Globals Construction)
+ */
+static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
+{
+#ifdef DEBUG
+	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "post-deactivate");
+#endif
+
+	if (1 == CHUID_G(active)) {
+		int res;
+		uid_t ruid = CHUID_G(ruid);
+		uid_t euid = CHUID_G(euid);
+		gid_t rgid = CHUID_G(rgid);
+		gid_t egid = CHUID_G(egid);
+
+		res = my_setuids(ruid, euid, -1, 1);
+		if (0 != res) {
+			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
+		}
+
+		res = my_setgids(rgid, egid, -1, 1);
+		if (0 != res) {
+			PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
+		}
+	}
+
+	return SUCCESS;
+}
+
+/**
  * @brief Module Entry
  */
 zend_module_entry chuid_module_entry = {
@@ -314,22 +226,21 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	PHP_MINIT(chuid),
 	PHP_MSHUTDOWN(chuid),
-	PHP_RINIT(chuid),
-	PHP_RSHUTDOWN(chuid),
+	NULL,
+	NULL,
 	PHP_MINFO(chuid),
 	PHP_CHUID_EXTVER,
 	PHP_MODULE_GLOBALS(chuid),
 	PHP_GINIT(chuid),
 	NULL,
-	NULL,
+	ZEND_MODULE_POST_ZEND_DEACTIVATE_N(chuid),
 	STANDARD_MODULE_PROPERTIES_EX
 };
 
-
-#ifdef COMPILE_DL_CHUID
+#if COMPILE_DL_CHUID
 /**
  * @brief returns a pointer to @c chuid_module_entry
  * @return Pointer to @c chuid_module_entry
  */
-ZEND_GET_MODULE(chuid)
+ZEND_GET_MODULE(chuid);
 #endif

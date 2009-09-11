@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.2
+ * @version 0.3
  * @brief Helper functions — definitions
  */
 
@@ -29,11 +29,14 @@ PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(TSRMLS_D);
 PHPCHUID_VISIBILITY_HIDDEN int do_global_chroot(int can_chroot);
 
 /**
- * @brief Finds out the UID and GID of @c nobody user.
- * @param uid UID
- * @param gid GID
- * @warning If @c getpwnam("nobody") fails, @c uid and @c gid remain unchanged
+ * @brief Changes {R,E}UID/{R,E}GID to the owner of the DOCUMENT_ROOT
+ * @return Whether operation succeeded
+ * @retval SUCCESS OK
+ * @retval FAILURE Failure
  */
-PHPCHUID_VISIBILITY_HIDDEN void who_is_mr_nobody(uid_t* uid, gid_t* gid);
+PHPCHUID_VISIBILITY_HIDDEN int change_uids(int method TSRMLS_DC);
 
-#endif /* HELPERS_H_ */
+PHPCHUID_VISIBILITY_HIDDEN void chuid_zend_extension_register(zend_extension* new_extension, DL_HANDLE handle);
+PHPCHUID_VISIBILITY_HIDDEN int chuid_zend_remove_extension(zend_extension* extension);
+
+#endif /* PHPCHUID_HELPERS_H_ */

@@ -19,7 +19,7 @@
 #define PHP_CHUID_H
 
 #define PHP_CHUID_EXTNAME "chuid" /**< Internal extension name */
-#define PHP_CHUID_EXTVER  "0.1"   /**< Extension version */
+#define PHP_CHUID_EXTVER  "0.3"   /**< Extension version */
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
@@ -27,6 +27,8 @@
 
 #include <php5/main/php.h>
 #include <php5/main/php_ini.h>
+#include <php5/Zend/zend_extensions.h>
+#include <php5/main/SAPI.h>
 
 #ifdef HAVE_UNISTD_H
 #	include <unistd.h>
@@ -77,7 +79,10 @@
 extern zend_module_entry chuid_module_entry;
 #define phpext_chuid_ptr &chuid_module_entry
 
-extern zend_bool be_secure;
+PHPCHUID_VISIBILITY_HIDDEN extern zend_bool be_secure;
+PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_module_gotup;
+PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_zend_extension_gotup;
+PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_zend_extension_faked;
 
 /**
  * @headerfile php_chuid.h
