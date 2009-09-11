@@ -1,0 +1,74 @@
+/**
+ * @file
+ * @author Vladimir Kolesnikov <vladimir@extrememember.com>
+ * @version 0.2
+ * @brief Compatibilty related stuff — implementation
+ */
+
+#include "compatibility.h"
+#include <stddef.h>
+
+/**
+ * @details Uses @c setresuid() if available or @c seteuid() if not, that is why when @c method is not 0 only EUID is guaranteed to be set
+ * (provided that the operation was successful)
+ */
+int my_setuids(uid_t ruid, uid_t euid, uid_t suid, int method)
+{
+	if (0 == method) {
+		return setuid(euid);
+	}
+
+#if HAVE_SETRESUID == 1
+	return setresuid(ruid, euid, suid);
+#else
+	return seteuid(euid);
+#endif
+
+}
+
+/**
+ * @details Uses @c setresgid() if available or @c setegid() if not, that is why when @c method is not 0 only EGID is guaranteed to be set
+ * (provided that the operation was successful)
+ */
+int my_setgids(gid_t rgid, gid_t egid, gid_t sgid, int method)
+{
+	if (0 == method) {
+		return setgid(egid);
+	}
+
+#if HAVE_SETRESGID == 1
+	return setresgid(rgid, egid, sgid);
+#else
+	return setegid(egid);
+#endif
+}
+
+void my_getuids(uid_t* ruid, uid_t* euid)
+{
+	uid_t r, e;
+#if HAVE_GETRESUID == 1
+	uid_t dummy;
+	getresuid(&r, &e, &dummy);
+#else
+	r = getuid();
+	e = geteuid();
+#endif
+
+	if (NULL != ruid) *ruid = r;
+	if (NULL != euid) *euid = e;
+}
+
+void my_getgids(gid_t* rgid, gid_t* egid)
+{
+	gid_t r, e;
+#if HAVE_GETRESGID == 1
+	gid_t dummy;
+	getresuid(&r, &e, &dummy);
+#else
+	r = getgid();
+	e = getegid();
+#endif
+
+	if (NULL != rgid) *rgid = r;
+	if (NULL != egid) *egid = e;
+}
