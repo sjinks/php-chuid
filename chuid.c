@@ -13,7 +13,6 @@
 #include "extension.h"
 
 zend_bool be_secure = 1;          /**< Whether we should turn startup warnings to errors */
-zend_bool chuid_module_gotup = 0; /**< Whether the module has started up */
 
 /**
  * @brief Module globals
@@ -60,23 +59,9 @@ static PHP_MINIT_FUNCTION(chuid)
 	int severity;
 	int retval;
 
-	if (1 == chuid_module_gotup) {
-		return SUCCESS;
-	}
-
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
 #endif
-
-	chuid_module_gotup = 1;
-
-	if (0 == chuid_zend_extension_gotup) {
-#ifdef DEBUG
-		fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Registering Zend extension");
-#endif
-		chuid_zend_extension_register(&zend_extension_entry, 0);
-		chuid_zend_extension_faked = 1;
-	}
 
 	REGISTER_INI_ENTRIES();
 
@@ -128,17 +113,6 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MSHUTDOWN");
 #endif
-
-	if (0 != chuid_zend_extension_faked) {
-		zend_extension* ext = zend_get_extension(PHP_CHUID_EXTNAME);
-		if (NULL != ext) {
-			if (NULL != ext->shutdown) {
-				ext->shutdown(ext);
-			}
-
-			chuid_zend_remove_extension(ext);
-		}
-    }
 
 	UNREGISTER_INI_ENTRIES();
 
@@ -236,11 +210,3 @@ zend_module_entry chuid_module_entry = {
 	ZEND_MODULE_POST_ZEND_DEACTIVATE_N(chuid),
 	STANDARD_MODULE_PROPERTIES_EX
 };
-
-#if COMPILE_DL_CHUID
-/**
- * @brief returns a pointer to @c chuid_module_entry
- * @return Pointer to @c chuid_module_entry
- */
-ZEND_GET_MODULE(chuid);
-#endif

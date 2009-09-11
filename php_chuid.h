@@ -18,8 +18,11 @@
 #ifndef PHP_CHUID_H
 #define PHP_CHUID_H
 
-#define PHP_CHUID_EXTNAME "chuid" /**< Internal extension name */
-#define PHP_CHUID_EXTVER  "0.3"   /**< Extension version */
+#define PHP_CHUID_EXTNAME   "chuid" /**< Internal extension name */
+#define PHP_CHUID_EXTVER    "0.3"   /**< Extension version */
+#define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
+#define PHP_CHUID_URL       "http://blog.sjinks.org.ua/"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
@@ -76,13 +79,8 @@
 #	define PHPCHUID_ERROR(severity, format, ...) zend_error((severity), (format), __VA_ARGS__)
 #endif
 
-extern zend_module_entry chuid_module_entry;
-#define phpext_chuid_ptr &chuid_module_entry
-
 PHPCHUID_VISIBILITY_HIDDEN extern zend_bool be_secure;
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_module_gotup;
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_zend_extension_gotup;
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool chuid_zend_extension_faked;
+PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 
 /**
  * @headerfile php_chuid.h
@@ -103,6 +101,6 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	char* global_chroot;      /**< Global chroot() directory */
 ZEND_END_MODULE_GLOBALS(chuid)
 
-extern ZEND_DECLARE_MODULE_GLOBALS(chuid);
+PHPCHUID_VISIBILITY_HIDDEN extern ZEND_DECLARE_MODULE_GLOBALS(chuid);
 
 #endif

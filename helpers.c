@@ -166,31 +166,3 @@ int change_uids(int method TSRMLS_DC)
 
 	return do_set_guids(uid, gid, method);
 }
-
-static int ptr_compare_func(void* p1, void* p2)
-{
-	return p1 == p2;
-}
-
-void chuid_zend_extension_register(zend_extension* new_extension, DL_HANDLE handle)
-{
-	zend_extension extension;
-
-	extension = *new_extension;
-	extension.handle = handle;
-
-	zend_extension_dispatch_message(ZEND_EXTMSG_NEW_EXTENSION, &extension);
-
-	zend_llist_add_element(&zend_extensions, &extension);
-}
-
-int chuid_zend_remove_extension(zend_extension* extension)
-{
-	llist_dtor_func_t dtor;
-
-	dtor = zend_extensions.dtor; /* avoid dtor */
-	zend_extensions.dtor = NULL;
-	zend_llist_del_element(&zend_extensions, extension, ptr_compare_func);
-	zend_extensions.dtor = dtor;
-	return SUCCESS;
-}

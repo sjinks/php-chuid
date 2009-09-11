@@ -36,7 +36,4 @@ PHPCHUID_VISIBILITY_HIDDEN int do_global_chroot(int can_chroot);
  */
 PHPCHUID_VISIBILITY_HIDDEN int change_uids(int method TSRMLS_DC);
 
-PHPCHUID_VISIBILITY_HIDDEN void chuid_zend_extension_register(zend_extension* new_extension, DL_HANDLE handle);
-PHPCHUID_VISIBILITY_HIDDEN int chuid_zend_remove_extension(zend_extension* extension);
-
 #endif /* PHPCHUID_HELPERS_H_ */

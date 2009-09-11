@@ -1,13 +1,13 @@
 PHP_ARG_ENABLE(
 	[chuid],
 	[whether to enable the "chuid" extension],
-	[  --enable-chuid        Enable "chuid" extension support]
+	[  --enable-chuid          Enable "chuid" extension support]
 )
 
 PHP_ARG_WITH(
 	[cap],
 	[for libcap support],
-	[  --with-cap[=DIR]        Include libcap support],
+	[  --with-cap[=DIR]          Include libcap support],
 	[""],
 	[no]
 )

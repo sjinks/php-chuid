@@ -8,32 +8,19 @@
 #include "extension.h"
 #include "helpers.h"
 
-zend_bool chuid_zend_extension_gotup = 0;
-zend_bool chuid_zend_extension_faked = 0;
-
 zend_bool sapi_is_cli = 0; /**< Whether SAPI is CLI */
 zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
 
 static int chuid_zend_startup(zend_extension* extension)
 {
-	if (1 == chuid_zend_extension_gotup) {
-		return SUCCESS;
-	}
-
 #ifdef DEBUG
 	fprintf(stderr, "Zend Startup, %s\n", extension->name);
 #endif
 
-	chuid_zend_extension_gotup = 1;
-
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
-	if (0 == chuid_module_gotup) {
-		return zend_startup_module(&chuid_module_entry);
-	}
-
-	return SUCCESS;
+	return zend_startup_module(&chuid_module_entry);
 }
 
 /**
@@ -66,9 +53,9 @@ static void chuid_zend_activate(void)
 ZEND_DLEXPORT zend_extension zend_extension_entry = {
 	PHP_CHUID_EXTNAME,
 	PHP_CHUID_EXTVER,
-	"Vladimir Kolesnikov",
-	"http://blog.sjinks.org.ua/",
-	"Copyright (c) 2009",
+	PHP_CHUID_AUTHOR,
+	PHP_CHUID_URL,
+	PHP_CHUID_COPYRIGHT,
 
 	chuid_zend_startup,    /* Startup */
 	NULL,                  /* Shutdown */
@@ -95,4 +82,3 @@ ZEND_DLEXPORT zend_extension zend_extension_entry = {
 #if COMPILE_DL_CHUID
 ZEND_EXTENSION();
 #endif
-
