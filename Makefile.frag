@@ -4,5 +4,5 @@ docs/html/index.html: caps.h compatibility.h config.h helpers.h macros.h php_chu
 	doxygen Doxyfile
 
 macros.h: caps.c chuid.c compatibility.c helpers.c
-	$(CPP) $(COMMON_FLAGS) -dM -CC $^ -o $@
+	$(CPP) $(COMMON_FLAGS) -dD $^ | $(CPP) $(DEFS) $(CPPFLAGS) -dM - > $@
 
