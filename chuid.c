@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3
+ * @version 0.3.1
  * @brief PHP CHUID Module
  */
 
@@ -11,6 +11,10 @@
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"
+
+#ifndef PHP_GINIT
+static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
+#endif
 
 zend_bool be_secure = 1;          /**< Whether we should turn startup warnings to errors */
 
@@ -64,6 +68,14 @@ static PHP_MINIT_FUNCTION(chuid)
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
 #endif
+
+#ifndef PHP_GINIT
+#ifdef ZTS
+	ts_allocate_id(&chuid_globals_id, sizeof(zend_chuid_globals), (ts_allocate_ctor)chuid_globals_ctor, NULL);
+#else
+	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
+#endif /* ZTS */
+#endif /* PHP_GINIT */
 
 	REGISTER_INI_ENTRIES();
 
@@ -125,6 +137,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 	return SUCCESS;
 }
 
+#ifdef PHP_GINIT
 /**
  * @brief Globals Constructor
  * @param chuid_globals Pointer to the globals container
@@ -142,6 +155,17 @@ static PHP_GINIT_FUNCTION(chuid)
 	chuid_globals->active = 0;
 	chuid_globals->global_chroot = NULL;
 }
+#else
+
+static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
+{
+	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
+	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
+	chuid_globals->active = 0;
+	chuid_globals->global_chroot = NULL;
+}
+
+#endif
 
 /**
  * @brief Module Information
@@ -200,7 +224,7 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
  */
 zend_module_entry chuid_module_entry = {
 	STANDARD_MODULE_HEADER_EX,
-	NULL,
+	ini_entries,
 	NULL,
 	PHP_CHUID_EXTNAME,
 	NULL,
@@ -210,9 +234,13 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	PHP_MINFO(chuid),
 	PHP_CHUID_EXTVER,
+#ifdef PHP_MODULE_GLOBALS
 	PHP_MODULE_GLOBALS(chuid),
+#ifdef PHP_GINIT
 	PHP_GINIT(chuid),
 	NULL,
+#endif
+#endif
 	ZEND_MODULE_POST_ZEND_DEACTIVATE_N(chuid),
 	STANDARD_MODULE_PROPERTIES_EX
 };

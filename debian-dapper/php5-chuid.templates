@@ -1,0 +1,5 @@
+Template: php5-chuid/edit_phpini
+Type: boolean
+Default: true
+Description: Configure php.ini for chuid?
+ This script can add the necessary options for chuid to the PHP5 ini file.
