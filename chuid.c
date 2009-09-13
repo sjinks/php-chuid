@@ -16,6 +16,10 @@
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
 #endif
 
+#ifndef ZEND_ENGINE_2
+#	define OnUpdateLong OnUpdateInt
+#endif
+
 zend_bool be_secure = 1;          /**< Whether we should turn startup warnings to errors */
 
 /**
@@ -183,6 +187,7 @@ static PHP_MINFO_FUNCTION(chuid)
 	DISPLAY_INI_ENTRIES();
 }
 
+#ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 /**
  * @brief Request Post Deactivate Routine
  * @return Whether shutdown was successful
@@ -218,14 +223,21 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 
 	return SUCCESS;
 }
+#endif
 
 /**
  * @brief Module Entry
  */
 zend_module_entry chuid_module_entry = {
+#if ZEND_MODULE_API_NO > 20010901
+#	if defined(STANDARD_MODULE_HEADER_EX)
 	STANDARD_MODULE_HEADER_EX,
 	ini_entries,
 	NULL,
+#	else
+	STANDARD_MODULE_HEADER,
+#	endif
+#endif
 	PHP_CHUID_EXTNAME,
 	NULL,
 	PHP_MINIT(chuid),
@@ -233,14 +245,20 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	NULL,
 	PHP_MINFO(chuid),
+#if ZEND_MODULE_API_NO > 20010901
 	PHP_CHUID_EXTVER,
+#endif
 #ifdef PHP_MODULE_GLOBALS
 	PHP_MODULE_GLOBALS(chuid),
-#ifdef PHP_GINIT
+#	ifdef PHP_GINIT
 	PHP_GINIT(chuid),
 	NULL,
+#	endif
 #endif
-#endif
+#ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 	ZEND_MODULE_POST_ZEND_DEACTIVATE_N(chuid),
 	STANDARD_MODULE_PROPERTIES_EX
+#else
+	STANDARD_MODULE_PROPERTIES
+#endif
 };
