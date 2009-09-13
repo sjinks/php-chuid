@@ -28,10 +28,10 @@
 #	include "config.h"
 #endif
 
-#include <php5/main/php.h>
-#include <php5/main/php_ini.h>
-#include <php5/Zend/zend_extensions.h>
-#include <php5/main/SAPI.h>
+#include <main/php.h>
+#include <main/php_ini.h>
+#include <Zend/zend_extensions.h>
+#include <main/SAPI.h>
 
 #ifdef HAVE_UNISTD_H
 #	include <unistd.h>

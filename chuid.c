@@ -1,22 +1,29 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.1
+ * @version 0.3.2
  * @brief PHP CHUID Module
  */
 
 #include "php_chuid.h"
-#include <php5/ext/standard/info.h>
+#include <ext/standard/info.h>
 #include "compatibility.h"
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"
 
 #ifndef PHP_GINIT
+/**
+ * @note For pre-5.2 PHPs which fo not have PHP_GINIT and PHP_GSHUTDOWN
+ * @param chuid_globals Pointer to the extension globals
+ */
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
 #endif
 
 #ifndef ZEND_ENGINE_2
+	/**
+	 * @note Zend Engine 1 has OnUpdateInt instead of OnUpdateLong
+	 */
 #	define OnUpdateLong OnUpdateInt
 #endif
 
@@ -142,6 +149,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 }
 
 #ifdef PHP_GINIT
+
 /**
  * @brief Globals Constructor
  * @param chuid_globals Pointer to the globals container
@@ -154,19 +162,18 @@ static PHP_GINIT_FUNCTION(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "GINIT");
 #endif
 
-	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
-	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
-	chuid_globals->active = 0;
-	chuid_globals->global_chroot = NULL;
+	globals_constructor(chuid_globals);
 }
+
 #else
 
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 {
-	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
-	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
-	chuid_globals->active = 0;
-	chuid_globals->global_chroot = NULL;
+#ifdef DEBUG
+	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Globals Constructor");
+#endif
+
+	globals_constructor(chuid_globals);
 }
 
 #endif
@@ -203,24 +210,7 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "post-deactivate");
 #endif
 
-	if (1 == CHUID_G(active)) {
-		int res;
-		uid_t ruid = CHUID_G(ruid);
-		uid_t euid = CHUID_G(euid);
-		gid_t rgid = CHUID_G(rgid);
-		gid_t egid = CHUID_G(egid);
-
-		res = my_setuids(ruid, euid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
-		}
-
-		res = my_setgids(rgid, egid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
-		}
-	}
-
+	deactivate();
 	return SUCCESS;
 }
 #endif

@@ -51,30 +51,14 @@ static void chuid_zend_activate(void)
 }
 
 #ifndef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
-#include "compatibility.h"
 
 static void chuid_zend_deactivate(void)
 {
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Zend Dectivate");
 #endif
-	if (1 == CHUID_G(active)) {
-		int res;
-		uid_t ruid = CHUID_G(ruid);
-		uid_t euid = CHUID_G(euid);
-		gid_t rgid = CHUID_G(rgid);
-		gid_t egid = CHUID_G(egid);
 
-		res = my_setuids(ruid, euid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
-		}
-
-		res = my_setgids(rgid, egid, -1, 1);
-		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
-		}
-	}
+	deactivate();
 }
 #endif
 

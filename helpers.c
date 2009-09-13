@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3
+ * @version 0.3.2
  * @brief Helper functions — implementation
  */
 
@@ -165,4 +165,33 @@ int change_uids(int method TSRMLS_DC)
 	}
 
 	return do_set_guids(uid, gid, method);
+}
+
+void deactivate(void)
+{
+	if (1 == CHUID_G(active)) {
+		int res;
+		uid_t ruid = CHUID_G(ruid);
+		uid_t euid = CHUID_G(euid);
+		gid_t rgid = CHUID_G(rgid);
+		gid_t egid = CHUID_G(egid);
+
+		res = my_setuids(ruid, euid, -1, 1);
+		if (0 != res) {
+			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
+		}
+
+		res = my_setgids(rgid, egid, -1, 1);
+		if (0 != res) {
+			PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
+		}
+	}
+}
+
+void globals_constructor(zend_chuid_globals* chuid_globals)
+{
+	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
+	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
+	chuid_globals->active = 0;
+	chuid_globals->global_chroot = NULL;
 }
