@@ -17,6 +17,6 @@
 PHPCHUID_VISIBILITY_HIDDEN extern zend_bool sapi_is_cli;
 PHPCHUID_VISIBILITY_HIDDEN extern zend_bool sapi_is_cgi;
 
-ZEND_DLEXPORT zend_extension zend_extension_entry;
+extern ZEND_DLEXPORT zend_extension zend_extension_entry;
 
 #endif /* PHPCHUID_EXTENSION_H_ */

@@ -25,9 +25,6 @@ static int chuid_zend_startup(zend_extension* extension)
 
 /**
  * @brief Request Activation Routine
- * @return Whether activation was successful
- * @retval SUCCESS Yes
- * @retval FAILURE No
  * @see change_uids()
  *
  * This is what the extension was written for :-) This function changes UIDs and GIDs (if INI settings permit).
