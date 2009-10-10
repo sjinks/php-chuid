@@ -3,7 +3,7 @@ Section: web
 Priority: optional
 Maintainer: Vladimir Kolesnikov <vladimir@extrememember.com>
 Build-Depends: debhelper (>= 7), php5-dev, libcap-dev
-Standards-Version: 3.8.0
+Standards-Version: 3.8.3
 Vcs-Bzr: bzr://sjinks.pro/php-chuid/trunk/
 Homepage: http://blog.sjinks.org.ua/
 
