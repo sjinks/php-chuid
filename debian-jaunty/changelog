@@ -1,3 +1,10 @@
+php-chuid (0.3.3-1~jaunty~sj1) jaunty; urgency=high
+
+  * More secure way to disable functions
+    instead of zend_disable_function()
+
+ -- Vladimir Kolesnikov <vladimir@extrememember.com>  Sat, 14 Nov 2009 22:37:48 +0200
+
 php-chuid (0.3.1-1~jaunty~sj1) jaunty; urgency=low
 
   * Initial release.
