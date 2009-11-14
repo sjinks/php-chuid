@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.2
+ * @version 0.3.3
  * @brief Helper functions — definitions
  */
 
@@ -17,7 +17,7 @@
 /**
  * @brief Disables <code>posix_set{e,}{u,g}id()</code> PHP functions if told by @c chuid.disable_posix_setuid_family
  */
-PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(TSRMLS_D);
+PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(void);
 
 /**
  * @brief <code>chroot()</code>'s to the directory specified in @c chuid.global_chroot

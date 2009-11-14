@@ -98,7 +98,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	severity = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
 	retval   = (0 == be_secure) ? SUCCESS : FAILURE;
 
-	disable_posix_setuids(TSRMLS_C);
+	disable_posix_setuids();
 
 	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid) && 0 != be_secure) {
 		zend_error(E_CORE_ERROR, "check_capabilities() failed");
@@ -142,6 +142,11 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MSHUTDOWN");
 #endif
+
+	if (0 != CHUID_G(disable_setuid)) {
+		zend_hash_clean(&blacklisted_functions);
+		zend_execute_internal = old_execute_internal;
+	}
 
 	UNREGISTER_INI_ENTRIES();
 

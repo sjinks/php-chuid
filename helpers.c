@@ -1,13 +1,80 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.2
+ * @version 0.3.3
  * @brief Helper functions — implementation
  */
 
 #include "helpers.h"
 #include "caps.h"
 #include "compatibility.h"
+
+/**
+ * @brief Hash table with the names of the blacklisted functions
+ * @note Gets populated in @c disable_posix_setuids() and destroyed in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
+ */
+HashTable blacklisted_functions;
+
+/**
+ * @brief Saved @c zend_execute_internal()
+ * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
+ */
+void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
+
+/**
+ * @brief Dunction execution handler
+ * @param execute_data_ptr Zend Execute Data
+ * @param return_value_used Whether the return value is used
+ */
+static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC)
+{
+	char* lcname      = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
+	size_t lcname_len = strlen(lcname);
+	int ht            = execute_data_ptr->opline->extended_value;
+	zval* return_value;
+
+#ifdef ZEND_ENGINE_2
+	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
+	int free_lcname      = 0;
+
+	if (NULL != ce) {
+		char *tmp = (char*)emalloc(lcname_len + 2 + ce->name_length + 1); /* Class::method\0 */
+		memcpy(tmp,                       ce->name, ce->name_length);
+		memcpy(tmp + ce->name_length,     "::",     2);
+		memcpy(tmp + ce->name_length + 2, lcname,   lcname_len);
+		lcname      = tmp;
+		free_lcname = 1;
+		lcname_len += ce->name_length + 2;
+		lcname[lcname_len] = 0;
+		zend_str_tolower(lcname, lcname_len);
+	}
+#endif
+
+#ifdef ZEND_ENGINE_2
+	return_value = (*(temp_variable*)((char*)execute_data_ptr->Ts + execute_data_ptr->opline->result.u.var)).var.ptr;
+#else
+	return_value = execute_data_ptr->Ts[execute_data_ptr->opline->result.u.var].var.ptr;
+#endif
+
+	if (0 != CHUID_G(disable_setuid)) {
+		int res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+#ifdef ZEND_ENGINE_2
+		if (0 != free_lcname) {
+			efree(lcname);
+		}
+#endif
+
+		if (0 != res) {
+			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+			zend_bailout();
+			return;
+			/* To simulate an error instead: */
+			/* RETURN_FALSE; */
+		}
+	}
+
+	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
+}
 
 /**
  * @details Disables @c posix_setegid(), @c posix_seteuid(), @c posix_setgid() and @c posix_setuid() functions
@@ -17,18 +84,23 @@
  * functions are also disabled, because @c seteuid() changes only the effective UID,
  * not the real one, and it is Real UID that affects those functions' behavior
  */
-void disable_posix_setuids(TSRMLS_D)
+void disable_posix_setuids(void)
 {
 	if (0 != CHUID_G(disable_setuid)) {
-		zend_disable_function("posix_setegid", sizeof("posix_setegid")-1 TSRMLS_CC);
-		zend_disable_function("posix_seteuid", sizeof("posix_seteuid")-1 TSRMLS_CC);
-		zend_disable_function("posix_setgid",  sizeof("posix_setgid")-1  TSRMLS_CC);
-		zend_disable_function("posix_setuid",  sizeof("posix_setuid")-1  TSRMLS_CC);
+		unsigned long dummy = 0;
+		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
+		zend_hash_add(&blacklisted_functions, "posix_setegid", sizeof("posix_setegid"), &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_seteuid", sizeof("posix_seteuid"), &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_setgid",  sizeof("posix_setgid"),  &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_setuid",  sizeof("posix_setuid"),  &dummy, sizeof(dummy), NULL);
 #if !defined(HAVE_SETRESUID) && !defined(WITH_CAP_LIBRARY)
-		zend_disable_function("pcntl_setpriority", sizeof("pcntl_setpriority")-1 TSRMLS_CC);
-		zend_disable_function("posix_kill",        sizeof("posix_kill")-1        TSRMLS_CC);
-		zend_disable_function("proc_nice",         sizeof("proc_nice")-1         TSRMLS_CC);
+		zend_hash_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy, sizeof(dummy), NULL);
 #endif
+
+		old_execute_internal = zend_execute_internal;
+		zend_execute_internal = chuid_execute_internal;
 	}
 }
 

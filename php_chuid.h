@@ -7,7 +7,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.2
+ * @version 0.3.3
  * @brief Common include file
  */
 
@@ -19,9 +19,9 @@
 #define PHP_CHUID_H
 
 #define PHP_CHUID_EXTNAME   "chuid" /**< Internal extension name */
-#define PHP_CHUID_EXTVER    "0.3"   /**< Extension version */
+#define PHP_CHUID_EXTVER    "0.3.3" /**< Extension version */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
-#define PHP_CHUID_URL       "http://blog.sjinks.org.ua/"
+#define PHP_CHUID_URL       "http://blog.sjinks.pro/"
 #define PHP_CHUID_COPYRIGHT "Copyright (c) 2009"
 
 #ifdef HAVE_CONFIG_H
@@ -81,6 +81,8 @@
 
 PHPCHUID_VISIBILITY_HIDDEN extern zend_bool be_secure;
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
+PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
+PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
 
 /**
  * @headerfile php_chuid.h
