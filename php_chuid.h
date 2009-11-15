@@ -101,6 +101,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool cli_disable;    /**< Do not change UIDs/GIDs when SAPI is CLI */
 	long int default_uid;     /**< Default UID */
 	long int default_gid;     /**< Default GID */
+	long int forced_gid;      /**< Forced GID */
 	char* global_chroot;      /**< Global chroot() directory */
 ZEND_END_MODULE_GLOBALS(chuid)
 

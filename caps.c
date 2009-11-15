@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.2
+ * @version 0.3.3
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — implementation
  */
@@ -59,36 +59,40 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
  * @todo In theory, @c cap_set_flag() may fail. Maybe add a check?
  * @note There is no sense in @c CAP_SETUID and @c CAP_SETGID capabilities when ZTS is used, thats is why we drop them if ZTS is detected
  */
-int drop_capabilities(void)
+int drop_capabilities(int num_caps, cap_value_t* cap_list)
 {
 	int retval = 0;
 
-#ifdef WITH_CAP_LIBRARY
-	cap_t capabilities = cap_init();
-	if (NULL != capabilities) {
-		int res;
-		int num_caps;
-		cap_value_t cap_list[3] = { CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID };
-
-#ifdef ZTS
-		num_caps = 1;
-#else
-		num_caps = 3;
+#ifdef DEBUG
+	fprintf(stderr, "drop_capabilities: num_caps=%d\n", num_caps);
+	{
+		int i;
+		for (i=0; i<num_caps; ++i) {
+			fprintf(stderr, "Cap %d: %d\n", i+1, cap_list[i]);
+		}
+	}
 #endif
 
-		cap_set_flag(capabilities, CAP_EFFECTIVE, num_caps, cap_list, CAP_SET);
-		cap_set_flag(capabilities, CAP_PERMITTED, num_caps, cap_list, CAP_SET);
-		res = cap_set_proc(capabilities);
-		if (-1 == res) {
-			PHPCHUID_ERROR(E_WARNING, "cap_set_proc(): %s", strerror(errno));
+#ifdef WITH_CAP_LIBRARY
+	if (num_caps > 0) {
+		cap_t capabilities = cap_init();
+		if (NULL != capabilities) {
+			int res;
+
+			cap_set_flag(capabilities, CAP_EFFECTIVE, num_caps, cap_list, CAP_SET);
+			cap_set_flag(capabilities, CAP_PERMITTED, num_caps, cap_list, CAP_SET);
+			res = cap_set_proc(capabilities);
+			if (-1 == res) {
+				PHPCHUID_ERROR(E_WARNING, "cap_set_proc(): %s", strerror(errno));
+				retval = -1;
+			}
+
+			cap_free(capabilities);
+		}
+		else {
+			PHPCHUID_ERROR(E_WARNING, "cap_init(): %s", strerror(errno));
 			retval = -1;
 		}
-
-		cap_free(capabilities);
-	}
-	else {
-		PHPCHUID_ERROR(E_WARNING, "cap_init(): %s", strerror(errno));
-		retval = -1;
 	}
 #endif
 

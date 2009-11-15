@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.2
+ * @version 0.3.3
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — definitions
  */
@@ -35,10 +35,12 @@ typedef enum {
 PHPCHUID_VISIBILITY_HIDDEN int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_, int* restrict setuid_, int* restrict setgid_);
 
 /**
- * @brief Drops all capabilities except @c CAP_DAC_READ_SEARCH, @c CAP_SETUID and @c CAP_SETGID from the @c EFFECTIVE and @c PERMITTED sets
+ * @brief Drops all capabilities except those in @c cap_list from the @c EFFECTIVE and @c PERMITTED sets
+ * @param num_caps Number of capabilities in @c cap_list
+ * @param cap_list List of the capabilities to leave
  * @retval 0 Yes
  * @retval -1 No (@c cap_set_proc() or @c cap_init() failed, @c errno will be set)
  */
-PHPCHUID_VISIBILITY_HIDDEN int drop_capabilities(void);
+PHPCHUID_VISIBILITY_HIDDEN int drop_capabilities(int num_caps, cap_value_t* cap_list);
 
 #endif /* PHPCHUID_CAPS_H_ */

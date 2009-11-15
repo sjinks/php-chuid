@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.2
+ * @version 0.3.3
  * @brief Zend Extensions related stuff — implementation
  */
 
@@ -15,6 +15,9 @@ static int chuid_zend_startup(zend_extension* extension)
 {
 #ifdef DEBUG
 	fprintf(stderr, "Zend Startup, %s\n", extension->name);
+#	ifdef WITH_CAP_LIBRARY
+	fprintf(stderr, "WITH_CAP_LIBRARY: yes\n");
+#	endif
 #endif
 
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
@@ -32,14 +35,15 @@ static int chuid_zend_startup(zend_extension* extension)
  */
 static void chuid_zend_activate(void)
 {
+	long int forced_gid = CHUID_G(forced_gid);
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Zend Activate");
 #endif
 
 	if (1 == CHUID_G(active)) {
-		int method = 1;
+		int method = (forced_gid > 0) ? 2 : 3;
 		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
-			method = 0;
+			method -= 2;
 			CHUID_G(active) = 0;
 		}
 

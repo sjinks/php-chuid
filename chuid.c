@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.2
+ * @version 0.3.3
  * @brief PHP CHUID Module
  */
 
@@ -46,6 +46,7 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * <TR><TD>@c chuid.default_uid</TD><TD>@c int</TD><TD>Default UID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the UID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.default_gid</TD><TD>@c int</TD><TD>Default GID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the GID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.global_chroot</TD><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
+ * <TR><TD>@c chuid.force_gid</TD><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
 PHP_INI_BEGIN()
@@ -57,6 +58,7 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.global_chroot",                 NULL,    PHP_INI_SYSTEM, OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM, OnUpdateLong,   forced_gid,     zend_chuid_globals, chuid_globals)
 PHP_INI_END()
 
 /**
@@ -75,6 +77,9 @@ static PHP_MINIT_FUNCTION(chuid)
 	int can_setuid          = -1;
 	int severity;
 	int retval;
+	long int forced_gid;
+	int num_caps = 0;
+	cap_value_t caps[4];
 
 #ifdef DEBUG
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
@@ -94,9 +99,10 @@ static PHP_MINIT_FUNCTION(chuid)
 		return SUCCESS;
 	}
 
-	be_secure = CHUID_G(be_secure);
-	severity = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
-	retval   = (0 == be_secure) ? SUCCESS : FAILURE;
+	be_secure  = CHUID_G(be_secure);
+	severity   = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
+	retval     = (0 == be_secure) ? SUCCESS : FAILURE;
+	forced_gid = CHUID_G(forced_gid);
 
 	disable_posix_setuids();
 
@@ -116,7 +122,30 @@ static PHP_MINIT_FUNCTION(chuid)
 			return retval;
 		}
 
-		if (0 != drop_capabilities()) {
+		if (forced_gid > 0) {
+			if (0 != setgid((gid_t)forced_gid)) {
+				zend_error(E_CORE_ERROR, "setgid(%ld) failed", forced_gid);
+				return FAILURE;
+			}
+		}
+		else {
+#if defined(WITH_CAP_LIBRARY) && !defined(ZTS)
+			caps[num_caps] = CAP_SETGID;
+			++num_caps;
+#endif
+		}
+
+#if defined(WITH_CAP_LIBRARY)
+#	if !defined(ZTS)
+		caps[num_caps] = CAP_SETUID;
+		++num_caps;
+#	endif
+
+		caps[num_caps] = CAP_DAC_READ_SEARCH;
+		++num_caps;
+#endif
+
+		if (0 != drop_capabilities(num_caps, caps)) {
 			zend_error(E_CORE_ERROR, "drop_capabilities() failed");
 			return FAILURE;
 		}
