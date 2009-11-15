@@ -143,9 +143,9 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MSHUTDOWN");
 #endif
 
-	if (0 != CHUID_G(disable_setuid)) {
+	if (0 != CHUID_G(enabled) && 0 != CHUID_G(disable_setuid)) {
 		zend_hash_clean(&blacklisted_functions);
-		zend_execute_internal = old_execute_internal;
+		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
 	}
 
 	UNREGISTER_INI_ENTRIES();

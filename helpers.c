@@ -30,7 +30,7 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
 {
 	char* lcname      = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
 	size_t lcname_len = strlen(lcname);
-	int ht            = execute_data_ptr->opline->extended_value;
+/*	int ht            = execute_data_ptr->opline->extended_value; */
 	zval* return_value;
 
 #ifdef ZEND_ENGINE_2
@@ -100,6 +100,10 @@ void disable_posix_setuids(void)
 #endif
 
 		old_execute_internal = zend_execute_internal;
+		if (NULL == old_execute_internal) {
+			old_execute_internal = execute_internal;
+		}
+
 		zend_execute_internal = chuid_execute_internal;
 	}
 }
