@@ -34,7 +34,7 @@ PHPCHUID_VISIBILITY_HIDDEN int do_global_chroot(int can_chroot);
  * @retval SUCCESS OK
  * @retval FAILURE Failure
  */
-PHPCHUID_VISIBILITY_HIDDEN int change_uids(int method TSRMLS_DC);
+PHPCHUID_VISIBILITY_HIDDEN int change_uids(TSRMLS_D);
 
 PHPCHUID_VISIBILITY_HIDDEN void deactivate(void);
 PHPCHUID_VISIBILITY_HIDDEN void globals_constructor(zend_chuid_globals* chuid_globals);

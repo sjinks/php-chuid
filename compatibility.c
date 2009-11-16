@@ -12,9 +12,9 @@
  * @details Uses @c setresuid() if available or @c seteuid() if not, that is why when @c method is not 0 only EUID is guaranteed to be set
  * (provided that the operation was successful)
  */
-int my_setuids(uid_t ruid, uid_t euid, uid_t suid, int method)
+int my_setuids(uid_t ruid, uid_t euid, uid_t suid, enum change_xid_mode_t mode)
 {
-	if (0 == method) {
+	if (cxm_setuid == mode || cxm_setxid) {
 		return setuid(euid);
 	}
 
@@ -30,9 +30,9 @@ int my_setuids(uid_t ruid, uid_t euid, uid_t suid, int method)
  * @details Uses @c setresgid() if available or @c setegid() if not, that is why when @c method is not 0 only EGID is guaranteed to be set
  * (provided that the operation was successful)
  */
-int my_setgids(gid_t rgid, gid_t egid, gid_t sgid, int method)
+int my_setgids(gid_t rgid, gid_t egid, gid_t sgid, enum change_xid_mode_t mode)
 {
-	if (0 == method) {
+	if (cxm_setxid == mode) {
 		return setgid(egid);
 	}
 

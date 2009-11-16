@@ -155,26 +155,26 @@ static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
  * @brief Sets RUID/EUID/SUID and RGID/EGID/SGID
  * @param uid Real and Effective UID
  * @param gid Real and Effective GID
- * @param method Which method should be used to set UIDs and GIDs: 0: @c setuid(), 1: @c setuid() and @c setgid(), 2: @c setresuid(), 3: @c setresuid() and @c setresgid()
  * @return Whether calls to <code>my_setgids()</code>/<code>my_setuids()</code> were successful
  * @retval SUCCESS OK
  * @retval FAILURE Failure
  *
  * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
  */
-static int do_set_guids(uid_t uid, gid_t gid, int method)
+static int do_set_guids(uid_t uid, gid_t gid)
 {
 	int res;
+	enum change_xid_mode_t mode = CHUID_G(mode);
 
-	if (1 == method || 3 == method) {
-		res = my_setgids(gid, gid, 0, 3 == method);
+	if (cxm_setresxid == mode || cxm_setxid == mode) {
+		res = my_setgids(gid, gid, 0, mode);
 		if (0 != res) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, 0): %s", gid, gid, strerror(errno));
 			return FAILURE;
 		}
 	}
 
-	res = my_setuids(uid, uid, 0, method >= 2);
+	res = my_setuids(uid, uid, 0, mode);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_CORE_ERROR, "my_setuids(%d, %d, 0): %s", uid, uid, strerror(errno));
 		return FAILURE;
@@ -191,9 +191,8 @@ static int do_set_guids(uid_t uid, gid_t gid, int method)
  * @retval FAILURE Failure
  * @see do_set_guids(), who_is_mr_nobody()
  * @note If the default UID is 65534, @c nobody user is assumed and its UID/GID are refined by @c who_is_mr_nobody()
- * @param method 0: @c setuid(), 1: @c setuid() and @c setgid(), 2: @c setresuid(), 3: @c setresuid() and @c setresgid()
  */
-static int set_default_guids(int method)
+static int set_default_guids()
 {
 	gid_t default_gid = (gid_t)CHUID_G(default_gid);
 	uid_t default_uid = (uid_t)CHUID_G(default_uid);
@@ -202,25 +201,20 @@ static int set_default_guids(int method)
 		who_is_mr_nobody(&default_uid, &default_gid);
 	}
 
-	return do_set_guids(default_uid, default_gid, method);
+	return do_set_guids(default_uid, default_gid);
 }
 
 /**
  * @see set_default_guids()
  * @details Tries to change {R,E}{U,G}ID to the owner of the @c DOCUMENT_ROOT. If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
- * @param method 0: @c setuid(), 1: @c setuid() and @c setgid(), 2: @c setresuid(), 3: @c setresuid() and @c setresgid()
  */
-int change_uids(int method TSRMLS_DC)
+int change_uids(TSRMLS_D)
 {
 	char* docroot;
 	int res;
 	struct stat statbuf;
 	uid_t uid;
 	gid_t gid;
-
-#ifdef DEBUG
-	fprintf(stderr, "change_uids: method=%d\n", method);
-#endif
 
 	if (NULL != sapi_module.getenv) {
 		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
@@ -230,13 +224,13 @@ int change_uids(int method TSRMLS_DC)
 	}
 
 	if (NULL == docroot) {
-		return set_default_guids(method);
+		return set_default_guids();
 	}
 
 	res = stat(docroot, &statbuf);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot, strerror(errno));
-		return set_default_guids(method);
+		return set_default_guids();
 	}
 
 	uid = statbuf.st_uid;
@@ -247,7 +241,7 @@ int change_uids(int method TSRMLS_DC)
 		if (0 == gid) gid = (gid_t)CHUID_G(default_gid);
 	}
 
-	return do_set_guids(uid, gid, method);
+	return do_set_guids(uid, gid);
 }
 
 void deactivate(void)
@@ -258,14 +252,14 @@ void deactivate(void)
 		uid_t euid = CHUID_G(euid);
 		gid_t rgid = CHUID_G(rgid);
 		gid_t egid = CHUID_G(egid);
-		long int forced_gid = CHUID_G(forced_gid);
+		zend_bool change_gid = (CHUID_G(forced_gid) < 1 && 0 == CHUID_G(no_set_gid));
 
 		res = my_setuids(ruid, euid, -1, 1);
 		if (0 != res) {
 			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
 		}
 
-		if (forced_gid < 1) {
+		if (0 != change_gid) {
 			res = my_setgids(rgid, egid, -1, 1);
 			if (0 != res) {
 				PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));

@@ -43,6 +43,7 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * <TR><TD>@c chuid.never_root</TD><TD>@c bool</TD><TD>Forces the change to the @c default_uid/@c default_gid of the UID/GID computes to be 0 (root)</TD></TR>
  * <TR><TD>@c chuid.cli_disable</TD><TD>@c bool</TD><TD>Do not try to modify UIDs/GIDs when SAPI is CLI</TD></TR>
  * <TR><TD>@c chuid.be_secure</TD><TD>@c bool</TD><TD>Turns some warnings to errors (for the sake of security)</TD></TR>
+ * <TR><TD>@c chuid.no_set_gid</TD><TD>@c bool</TD><TD>Do not change GID</TD></TR>
  * <TR><TD>@c chuid.default_uid</TD><TD>@c int</TD><TD>Default UID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the UID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.default_gid</TD><TD>@c int</TD><TD>Default GID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the GID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.global_chroot</TD><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
@@ -55,6 +56,7 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.be_secure",                   "1",     PHP_INI_SYSTEM, OnUpdateBool,   be_secure,      zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM, OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.global_chroot",                 NULL,    PHP_INI_SYSTEM, OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
@@ -78,6 +80,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	int severity;
 	int retval;
 	long int forced_gid;
+	zend_bool no_gid;
 	int num_caps = 0;
 	cap_value_t caps[4];
 
@@ -103,6 +106,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	severity   = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
 	retval     = (0 == be_secure) ? SUCCESS : FAILURE;
 	forced_gid = CHUID_G(forced_gid);
+	no_gid     = CHUID_G(no_set_gid);
 
 	disable_posix_setuids();
 
@@ -128,12 +132,21 @@ static PHP_MINIT_FUNCTION(chuid)
 				return FAILURE;
 			}
 		}
+
+		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
+			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setxid : cxm_setuid;
+		}
 		else {
+			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
+		}
+
+
 #if defined(WITH_CAP_LIBRARY) && !defined(ZTS)
+		if (forced_gid < 1 && 0 == no_gid) {
 			caps[num_caps] = CAP_SETGID;
 			++num_caps;
-#endif
 		}
+#endif
 
 #if defined(WITH_CAP_LIBRARY)
 #	if !defined(ZTS)

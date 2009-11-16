@@ -84,25 +84,34 @@ PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
 
+enum change_xid_mode_t {
+	cxm_setuid,
+	cxm_setresuid,
+	cxm_setxid,
+	cxm_setresxid
+};
+
 /**
  * @headerfile php_chuid.h
  * @brief Module Globals
  */
 ZEND_BEGIN_MODULE_GLOBALS(chuid)
-	uid_t ruid;               /**< Saved Real User ID */
-	uid_t euid;               /**< Saved Effective User ID */
-	gid_t rgid;               /**< Saved Real Group ID */
-	gid_t egid;               /**< Saved Effective Group ID */
-	zend_bool enabled;        /**< Whether to enable this extension */
-	zend_bool disable_setuid; /**< Whether to disable posix_set{e,}{u,g}id() functions */
-	zend_bool active;         /**< Internal flag */
-	zend_bool never_root;     /**< Never run the request as root */
-	zend_bool be_secure;      /**< Turn startup warnings to errors */
-	zend_bool cli_disable;    /**< Do not change UIDs/GIDs when SAPI is CLI */
-	long int default_uid;     /**< Default UID */
-	long int default_gid;     /**< Default GID */
-	long int forced_gid;      /**< Forced GID */
-	char* global_chroot;      /**< Global chroot() directory */
+	uid_t ruid;                  /**< Saved Real User ID */
+	uid_t euid;                  /**< Saved Effective User ID */
+	gid_t rgid;                  /**< Saved Real Group ID */
+	gid_t egid;                  /**< Saved Effective Group ID */
+	zend_bool enabled;           /**< Whether to enable this extension */
+	zend_bool disable_setuid;    /**< Whether to disable posix_set{e,}{u,g}id() functions */
+	zend_bool active;            /**< Internal flag */
+	zend_bool never_root;        /**< Never run the request as root */
+	zend_bool be_secure;         /**< Turn startup warnings to errors */
+	zend_bool cli_disable;       /**< Do not change UIDs/GIDs when SAPI is CLI */
+	long int default_uid;        /**< Default UID */
+	long int default_gid;        /**< Default GID */
+	long int forced_gid;         /**< Forced GID */
+	zend_bool no_set_gid;        /**< Do not set GID */
+	char* global_chroot;         /**< Global chroot() directory */
+	enum change_xid_mode_t mode; /**< Change UID/GID mode */
 ZEND_END_MODULE_GLOBALS(chuid)
 
 PHPCHUID_VISIBILITY_HIDDEN extern ZEND_DECLARE_MODULE_GLOBALS(chuid);
