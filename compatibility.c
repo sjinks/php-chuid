@@ -14,7 +14,7 @@
  */
 int my_setuids(uid_t ruid, uid_t euid, uid_t suid, enum change_xid_mode_t mode)
 {
-	if (cxm_setuid == mode || cxm_setxid) {
+	if (cxm_setuid == mode || cxm_setxid == mode) {
 		return setuid(euid);
 	}
 

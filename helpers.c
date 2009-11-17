@@ -169,14 +169,14 @@ static int do_set_guids(uid_t uid, gid_t gid)
 	if (cxm_setresxid == mode || cxm_setxid == mode) {
 		res = my_setgids(gid, gid, 0, mode);
 		if (0 != res) {
-			PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, 0): %s", gid, gid, strerror(errno));
+			PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, 0, %d): %s", gid, gid, (int)mode, strerror(errno));
 			return FAILURE;
 		}
 	}
 
 	res = my_setuids(uid, uid, 0, mode);
 	if (0 != res) {
-		PHPCHUID_ERROR(E_CORE_ERROR, "my_setuids(%d, %d, 0): %s", uid, uid, strerror(errno));
+		PHPCHUID_ERROR(E_CORE_ERROR, "my_setuids(%d, %d, 0, %d): %s", uid, uid, (int)mode, strerror(errno));
 		return FAILURE;
 	}
 
@@ -252,17 +252,17 @@ void deactivate(void)
 		uid_t euid = CHUID_G(euid);
 		gid_t rgid = CHUID_G(rgid);
 		gid_t egid = CHUID_G(egid);
-		zend_bool change_gid = (CHUID_G(forced_gid) < 1 && 0 == CHUID_G(no_set_gid));
+		enum change_xid_mode_t mode = CHUID_G(mode);
 
-		res = my_setuids(ruid, euid, -1, 1);
+		res = my_setuids(ruid, euid, -1, mode);
 		if (0 != res) {
-			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1): %s", ruid, euid, strerror(errno));
+			PHPCHUID_ERROR(E_ERROR, "my_setuids(%d, %d, -1, %d): %s", ruid, euid, (int)mode, strerror(errno));
 		}
 
-		if (0 != change_gid) {
-			res = my_setgids(rgid, egid, -1, 1);
+		if (cxm_setresxid == mode || cxm_setxid == mode) {
+			res = my_setgids(rgid, egid, -1, mode);
 			if (0 != res) {
-				PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1): %s", rgid, egid, strerror(errno));
+				PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, -1, %d): %s", rgid, egid, (int)mode, strerror(errno));
 			}
 		}
 	}
