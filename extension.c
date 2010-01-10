@@ -39,12 +39,14 @@ static void chuid_zend_activate(void)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Zend Activate");
 #endif
 
+	TSRMLS_FETCH();
+
 	if (1 == CHUID_G(active)) {
 		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
 			CHUID_G(active) = 0;
 		}
 
-		change_uids();
+		change_uids(TSRMLS_C);
 	}
 }
 

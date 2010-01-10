@@ -108,14 +108,14 @@ static PHP_MINIT_FUNCTION(chuid)
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);
 
-	disable_posix_setuids();
+	disable_posix_setuids(TSRMLS_C);
 
 	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid) && 0 != be_secure) {
 		zend_error(E_CORE_ERROR, "check_capabilities() failed");
 		return FAILURE;
 	}
 
-	if (FAILURE == do_global_chroot(can_chroot) && 0 != be_secure) {
+	if (FAILURE == do_global_chroot(can_chroot TSRMLS_CC) && 0 != be_secure) {
 		zend_error(E_CORE_ERROR, "do_global_chroot() failed");
 		return FAILURE;
 	}
@@ -257,7 +257,9 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "post-deactivate");
 #endif
 
-	deactivate();
+	TSRMLS_FETCH();
+
+	deactivate(TSRMLS_C);
 	return SUCCESS;
 }
 #endif

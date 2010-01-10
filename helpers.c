@@ -22,7 +22,7 @@ HashTable blacklisted_functions;
 void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
 
 /**
- * @brief Dunction execution handler
+ * @brief Function execution handler
  * @param execute_data_ptr Zend Execute Data
  * @param return_value_used Whether the return value is used
  */
@@ -84,7 +84,7 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
  * functions are also disabled, because @c seteuid() changes only the effective UID,
  * not the real one, and it is Real UID that affects those functions' behavior
  */
-void disable_posix_setuids(void)
+void disable_posix_setuids(TSRMLS_D)
 {
 	if (0 != CHUID_G(disable_setuid)) {
 		unsigned long dummy = 0;
@@ -112,7 +112,7 @@ void disable_posix_setuids(void)
  * @note If the call to @c chroot() succeeds, the function immediately <code>chdir()</code>'s to the target directory
  * @note @c chuid_globals.global_chroot must begin with <code>/</code> — the path must be absolute
  */
-int do_global_chroot(int can_chroot)
+int do_global_chroot(int can_chroot TSRMLS_DC)
 {
 	int severity        = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
 	char* global_chroot = CHUID_G(global_chroot);
@@ -161,7 +161,7 @@ static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
  *
  * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
  */
-static int do_set_guids(uid_t uid, gid_t gid)
+static int do_set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 {
 	int res;
 	enum change_xid_mode_t mode = CHUID_G(mode);
@@ -192,7 +192,7 @@ static int do_set_guids(uid_t uid, gid_t gid)
  * @see do_set_guids(), who_is_mr_nobody()
  * @note If the default UID is 65534, @c nobody user is assumed and its UID/GID are refined by @c who_is_mr_nobody()
  */
-static int set_default_guids()
+static int set_default_guids(TSRMLS_D)
 {
 	gid_t default_gid = (gid_t)CHUID_G(default_gid);
 	uid_t default_uid = (uid_t)CHUID_G(default_uid);
@@ -201,7 +201,7 @@ static int set_default_guids()
 		who_is_mr_nobody(&default_uid, &default_gid);
 	}
 
-	return do_set_guids(default_uid, default_gid);
+	return do_set_guids(default_uid, default_gid TSRMLS_CC);
 }
 
 /**
@@ -224,13 +224,13 @@ int change_uids(TSRMLS_D)
 	}
 
 	if (NULL == docroot) {
-		return set_default_guids();
+		return set_default_guids(TSRMLS_C);
 	}
 
 	res = stat(docroot, &statbuf);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot, strerror(errno));
-		return set_default_guids();
+		return set_default_guids(TSRMLS_C);
 	}
 
 	uid = statbuf.st_uid;
@@ -241,10 +241,10 @@ int change_uids(TSRMLS_D)
 		if (0 == gid) gid = (gid_t)CHUID_G(default_gid);
 	}
 
-	return do_set_guids(uid, gid);
+	return do_set_guids(uid, gid TSRMLS_CC);
 }
 
-void deactivate(void)
+void deactivate(TSRMLS_D)
 {
 	if (1 == CHUID_G(active)) {
 		int res;
