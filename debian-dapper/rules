@@ -1,16 +1,15 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
-DEB_HOST_GNU_TYPE    ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-CFLAGS += -Os -Wall
 LDFLAGS += -Wl,--as-needed -Wl,-O1
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O1 -g3
+	CFLAGS += -O0 -g3
 else
-	CFLAGS += -g0 -fomit-frame-pointer
+	CFLAGS += -fomit-frame-pointer
 endif
 
 build: build-php5-stamp
@@ -76,3 +75,4 @@ binary-arch: build install
 
 binary: binary-arch binary-indep
 .PHONY: build clean binary-indep binary-arch binary install configure
+

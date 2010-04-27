@@ -4,8 +4,8 @@ Priority: optional
 Maintainer: Vladimir Kolesnikov <vladimir@extrememember.com>
 Build-Depends: debhelper (>= 7), php5-dev, libcap-dev
 Standards-Version: 3.8.3
-Vcs-Bzr: bzr://sjinks.pro/php-chuid/trunk/
-Homepage: http://blog.sjinks.org.ua/
+Vcs-Bzr: bzr://bzr.sjinks.pro/php-chuid/trunk/
+Homepage: http://blog.sjinks.pro/
 
 Package: php5-chuid
 Architecture: any
@@ -19,3 +19,19 @@ Description: Runs PHP as the owner of DocumentRoot
  from C, Java and Perl with a couple of unique PHP-specific features thrown
  in. The goal of the language is to allow web developers to write
  dynamically generated pages quickly.
+
+Package: php5-chuid-dbg
+Depends: ${misc:Depends}, php5-chuid (= ${binary:Version})
+Recommends: gdb
+Section: debug
+Priority: extra
+Architecture: any
+Description: Debug symbols for php5-chuid
+ This package provides the debug symbols for php5-backtrace needed for properly
+ debugging errors with gdb.
+ .
+ PHP5 is an HTML-embedded scripting language. Much of its syntax is borrowed
+ from C, Java and Perl with a couple of unique PHP-specific features thrown
+ in. The goal of the language is to allow web developers to write dynamically
+ generated pages quickly.
+
