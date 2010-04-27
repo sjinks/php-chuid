@@ -1,4 +1,4 @@
-php-chuid (0.3.4-1~karmic~sj1) karmic; urgency=low
+php-chuid (0.3.4-1~lucid~sj1) lucid; urgency=low
 
   * Trying http://www.linux.org.ru/jump-message.jsp?msgid=4821721&cid=4822445
     before falling back to seteuid()/setegid();

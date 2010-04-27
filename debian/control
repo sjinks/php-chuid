@@ -1,10 +1,10 @@
 Source: php-chuid
-Section: web
+Section: php
 Priority: optional
 Maintainer: Vladimir Kolesnikov <vladimir@extrememember.com>
-Build-Depends: debhelper (>= 7), php5-dev, libcap-dev
-Standards-Version: 3.8.0
-Vcs-Bzr: bzr://bzr.sjinks.pro/php-chuid/trunk/
+Build-Depends: debhelper (>= 7.0.50~), php5-dev, libcap-dev
+Standards-Version: 3.8.4
+Vcs-Bzr: bzr://bzr.sjinks.pro/php-chuid/lucid/
 Homepage: http://blog.sjinks.pro/
 
 Package: php5-chuid
