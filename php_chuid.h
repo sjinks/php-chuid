@@ -19,7 +19,7 @@
 #define PHP_CHUID_H
 
 #define PHP_CHUID_EXTNAME   "chuid" /**< Internal extension name */
-#define PHP_CHUID_EXTVER    "0.3.3" /**< Extension version */
+#define PHP_CHUID_EXTVER    "0.3.4" /**< Extension version */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
 #define PHP_CHUID_URL       "http://blog.sjinks.pro/"
 #define PHP_CHUID_COPYRIGHT "Copyright (c) 2009"

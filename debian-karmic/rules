@@ -13,41 +13,30 @@ else
 	CFLAGS += -g0 -fomit-frame-pointer
 endif
 
-build: build-stamp
-
-build-stamp:
-	dh build
-	sed "s#@EXTDIR@#`php-config5 --extension-dir`#" debian/chuid.ini.in > debian/chuid.ini
-	touch $@
+%:
+	dh $@
 
 override_dh_auto_configure:
-	phpize5 --clean
 	phpize5
 	dh_auto_configure -- \
 		--enable-chuid=shared \
 		--with-cap
-	
+
+override_dh_auto_build:
+	dh_auto_build
+	sed "s#@EXTDIR@#`php-config5 --extension-dir`#" debian/chuid.ini.in > debian/chuid.ini
+
 override_dh_auto_clean:
 	dh_auto_clean
 	phpize5 --clean
-	-rm -rf debian/chuid.ini
-
-clean:
-	dh clean
+	-rm -rf debian/chuid.ini tmp-php.ini
 
 override_dh_auto_install:
 	$(MAKE) install INSTALL_ROOT=debian/php5-chuid
 
-install: build
-	dh install
+override_dh_strip:
+	dh_strip -s --dbg-package=php5-chuid-dbg
 
-# Build architecture-independent files here.
-binary-indep:
-
-# Build architecture-dependent files here.
-binary-arch: build install
+override_dh_gencontrol:
 	echo "php:Depends=phpapi-`php-config5 --phpapi`" >> debian/php5-chuid.substvars
-	dh binary-arch
-
-binary: binary-arch binary-indep
-.PHONY: build clean binary-indep binary-arch binary install configure
+	dh_gencontrol
