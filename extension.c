@@ -98,3 +98,4 @@ ZEND_DLEXPORT zend_extension zend_extension_entry = {
 #if COMPILE_DL_CHUID
 ZEND_EXTENSION();
 #endif
+

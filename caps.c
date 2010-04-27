@@ -98,3 +98,4 @@ int drop_capabilities(int num_caps, cap_value_t* cap_list)
 
 	return retval;
 }
+

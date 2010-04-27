@@ -301,3 +301,4 @@ zend_module_entry chuid_module_entry = {
 	STANDARD_MODULE_PROPERTIES
 #endif
 };
+

@@ -14,8 +14,8 @@ PHP_ARG_WITH(
 
 
 if test $PHP_CHUID != "no"; then
-    AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid])
-    AH_TEMPLATE([WITH_CAP_LIBRARY], [Whether libcap support is turned on])
+	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid])
+	AH_TEMPLATE([WITH_CAP_LIBRARY], [Whether libcap support is turned on])
 
 	if test "$PHP_CAP" != "no"; then
 		for i in $PHP_CAP /usr/local /usr; do
@@ -41,3 +41,4 @@ if test $PHP_CHUID != "no"; then
 	PHP_SUBST(CHUID_SHARED_LIBADD)
 	PHP_ADD_MAKEFILE_FRAGMENT
 fi
+

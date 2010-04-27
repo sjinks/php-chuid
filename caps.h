@@ -44,3 +44,4 @@ PHPCHUID_VISIBILITY_HIDDEN int check_capabilities(int* restrict sys_chroot_, int
 PHPCHUID_VISIBILITY_HIDDEN int drop_capabilities(int num_caps, cap_value_t* cap_list);
 
 #endif /* PHPCHUID_CAPS_H_ */
+
