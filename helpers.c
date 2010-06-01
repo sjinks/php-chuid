@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.3
+ * @version 0.3.5
  * @brief Helper functions — implementation
  */
 
@@ -30,48 +30,27 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
 {
 	char* lcname      = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
 	size_t lcname_len = strlen(lcname);
-/*	int ht            = execute_data_ptr->opline->extended_value; */
-	zval* return_value;
 
 #ifdef ZEND_ENGINE_2
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
-	int free_lcname      = 0;
 
-	if (NULL != ce) {
-		char *tmp = (char*)emalloc(lcname_len + 2 + ce->name_length + 1); /* Class::method\0 */
-		memcpy(tmp,                       ce->name, ce->name_length);
-		memcpy(tmp + ce->name_length,     "::",     2);
-		memcpy(tmp + ce->name_length + 2, lcname,   lcname_len);
-		lcname      = tmp;
-		free_lcname = 1;
-		lcname_len += ce->name_length + 2;
-		lcname[lcname_len] = 0;
-		zend_str_tolower(lcname, lcname_len);
+	if (NULL == ce) {
+#endif
+
+		if (0 != CHUID_G(disable_setuid)) {
+			int res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+
+			if (0 != res) {
+				zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+				zend_bailout();
+				return;
+				/* To simulate an error instead: */
+				/* RETURN_FALSE; */
+			}
+		}
+#ifdef ZEND_ENGINE_2
 	}
 #endif
-
-#ifdef ZEND_ENGINE_2
-	return_value = (*(temp_variable*)((char*)execute_data_ptr->Ts + execute_data_ptr->opline->result.u.var)).var.ptr;
-#else
-	return_value = execute_data_ptr->Ts[execute_data_ptr->opline->result.u.var].var.ptr;
-#endif
-
-	if (0 != CHUID_G(disable_setuid)) {
-		int res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
-#ifdef ZEND_ENGINE_2
-		if (0 != free_lcname) {
-			efree(lcname);
-		}
-#endif
-
-		if (0 != res) {
-			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
-			zend_bailout();
-			return;
-			/* To simulate an error instead: */
-			/* RETURN_FALSE; */
-		}
-	}
 
 	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
 }
