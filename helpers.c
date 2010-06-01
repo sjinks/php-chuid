@@ -5,6 +5,8 @@
  * @brief Helper functions — implementation
  */
 
+#include <assert.h>
+
 #include "helpers.h"
 #include "caps.h"
 #include "compatibility.h"
@@ -44,8 +46,6 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
 				zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
 				zend_bailout();
 				return;
-				/* To simulate an error instead: */
-				/* RETURN_FALSE; */
 			}
 		}
 #ifdef ZEND_ENGINE_2
@@ -66,7 +66,7 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
 void disable_posix_setuids(TSRMLS_D)
 {
 	if (0 != CHUID_G(disable_setuid)) {
-		unsigned long dummy = 0;
+		unsigned long int dummy = 0;
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
 		zend_hash_add(&blacklisted_functions, "posix_setegid", sizeof("posix_setegid"), &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_seteuid", sizeof("posix_seteuid"), &dummy, sizeof(dummy), NULL);
@@ -114,13 +114,17 @@ int do_global_chroot(int can_chroot TSRMLS_DC)
 
 /**
  * @brief Finds out the UID and GID of @c nobody user.
- * @param uid UID
- * @param gid GID
+ * @param uid UID; must not be NULL
+ * @param gid GID; must not be NULL
  * @warning If @c getpwnam("nobody") fails, @c uid and @c gid remain unchanged
  */
 static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
 {
 	struct passwd* pwd = getpwnam("nobody");
+
+	assert(uid != NULL);
+	assert(gid != NULL);
+
 	if (NULL != pwd) {
 		*uid = pwd->pw_uid;
 		*gid = pwd->pw_gid;
@@ -216,8 +220,8 @@ int change_uids(TSRMLS_D)
 	gid = statbuf.st_gid;
 
 	if (0 != CHUID_G(never_root)) {
-		if (0 == uid) uid = (uid_t)CHUID_G(default_uid);
-		if (0 == gid) gid = (gid_t)CHUID_G(default_gid);
+		if (0 == uid) { uid = (uid_t)CHUID_G(default_uid); }
+		if (0 == gid) { gid = (gid_t)CHUID_G(default_gid); }
 	}
 
 	return do_set_guids(uid, gid TSRMLS_CC);
