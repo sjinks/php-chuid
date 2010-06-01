@@ -15,7 +15,6 @@ PHP_ARG_WITH(
 
 if test $PHP_CHUID != "no"; then
 	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid])
-	AH_TEMPLATE([WITH_CAP_LIBRARY], [Whether libcap support is turned on])
 
 	if test "$PHP_CAP" != "no"; then
 		for i in $PHP_CAP /usr/local /usr; do
@@ -29,7 +28,7 @@ if test $PHP_CHUID != "no"; then
 				[
 					PHP_ADD_LIBRARY_WITH_PATH(cap, $CAP_DIR/$PHP_LIBDIR, CHUID_SHARED_LIBADD)
 					PHP_ADD_INCLUDE($CAP_DIR/include)
-					AC_DEFINE([WITH_CAP_LIBRARY], [1])
+					AC_DEFINE([WITH_CAP_LIBRARY], [1], [Whether libcap support is turned on])
 				],
 				[],
 				[-L$CAP_DIR/$PHP_LIBDIR]
