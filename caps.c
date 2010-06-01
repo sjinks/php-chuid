@@ -1,10 +1,11 @@
 /**
  * @file
- * @version 0.3.3
+ * @version 0.3.5
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — implementation
  */
 
+#include <assert.h>
 #include "caps.h"
 
 /**
@@ -62,6 +63,8 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 int drop_capabilities(int num_caps, cap_value_t* cap_list)
 {
 	int retval = 0;
+
+	assert(cap_list != NULL);
 
 #ifdef DEBUG
 	fprintf(stderr, "drop_capabilities: num_caps=%d\n", num_caps);

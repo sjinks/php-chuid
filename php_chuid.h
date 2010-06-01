@@ -7,7 +7,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.4
+ * @version 0.3.5
  * @brief Common include file
  */
 
@@ -19,7 +19,7 @@
 #define PHP_CHUID_H
 
 #define PHP_CHUID_EXTNAME   "chuid" /**< Internal extension name */
-#define PHP_CHUID_EXTVER    "0.3.4" /**< Extension version */
+#define PHP_CHUID_EXTVER    "0.3.5" /**< Extension version */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
 #define PHP_CHUID_URL       "http://blog.sjinks.pro/"
 #define PHP_CHUID_COPYRIGHT "Copyright (c) 2009"

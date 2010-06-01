@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3
+ * @version 0.3.5
  * @brief Zend Extensions related stuff — definitions
  */
 

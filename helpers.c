@@ -114,8 +114,8 @@ int do_global_chroot(int can_chroot TSRMLS_DC)
 
 /**
  * @brief Finds out the UID and GID of @c nobody user.
- * @param uid UID; must not be NULL
- * @param gid GID; must not be NULL
+ * @param uid UID; must not be @c NULL
+ * @param gid GID; must not be @c NULL
  * @warning If @c getpwnam("nobody") fails, @c uid and @c gid remain unchanged
  */
 static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
