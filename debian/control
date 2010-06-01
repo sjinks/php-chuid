@@ -27,7 +27,7 @@ Section: debug
 Priority: extra
 Architecture: any
 Description: Debug symbols for php5-chuid
- This package provides the debug symbols for php5-backtrace needed for properly
+ This package provides the debug symbols for php5-chuid needed for properly
  debugging errors with gdb.
  .
  PHP5 is an HTML-embedded scripting language. Much of its syntax is borrowed
