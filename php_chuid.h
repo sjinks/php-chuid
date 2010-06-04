@@ -84,6 +84,19 @@ PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
 
+/**
+ * This one is required by php/main/internal_functions.c when chuid is built statically
+ *
+ * @def phpext_chuid_ptr
+ */
+#define phpext_chuid_ptr &chuid_module_entry
+
+#if COMPILE_DL_CHUID
+extern ZEND_DLEXPORT zend_extension chuid_extension_entry;
+#else
+PHPCHUID_VISIBILITY_HIDDEN extern zend_extension chuid_extension_entry;
+#endif
+
 enum change_xid_mode_t {
 	cxm_setuid,
 	cxm_setresuid,

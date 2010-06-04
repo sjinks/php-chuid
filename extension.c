@@ -23,7 +23,11 @@ static int chuid_zend_startup(zend_extension* extension)
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
+#if COMPILE_DL_CHUID
 	return zend_startup_module(&chuid_module_entry);
+#else
+	return SUCCESS;
+#endif
 }
 
 /**
@@ -62,7 +66,10 @@ static void chuid_zend_deactivate(void)
 }
 #endif
 
-ZEND_DLEXPORT zend_extension zend_extension_entry = {
+#if COMPILE_DL_CHUID
+ZEND_DLEXPORT
+#endif
+zend_extension chuid_extension_entry = {
 	PHP_CHUID_EXTNAME,
 	PHP_CHUID_EXTVER,
 	PHP_CHUID_AUTHOR,
