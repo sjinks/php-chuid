@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.3.3
+ * @version 0.3.5
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — definitions
  */
@@ -37,7 +37,7 @@ PHPCHUID_VISIBILITY_HIDDEN int check_capabilities(int* restrict sys_chroot_, int
 /**
  * @brief Drops all capabilities except those in @c cap_list from the @c EFFECTIVE and @c PERMITTED sets
  * @param num_caps Number of capabilities in @c cap_list
- * @param cap_list List of the capabilities to leave
+ * @param cap_list List of the capabilities to leave; must not be @c NULL
  * @retval 0 Yes
  * @retval -1 No (@c cap_set_proc() or @c cap_init() failed, @c errno will be set)
  */

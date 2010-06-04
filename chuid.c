@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.3
+ * @version 0.3.5
  * @brief PHP CHUID Module
  */
 
