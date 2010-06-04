@@ -88,6 +88,12 @@ static PHP_MINIT_FUNCTION(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
 #endif
 
+#if COMPILE_DL_CHUID
+	zend_extension extension = chuid_extension_entry;
+	extension.handle = NULL;
+	zend_llist_add_element(&zend_extensions, &extension);
+#endif
+
 #ifndef PHP_GINIT
 #ifdef ZTS
 	ts_allocate_id(&chuid_globals_id, sizeof(zend_chuid_globals), (ts_allocate_ctor)chuid_globals_ctor, NULL);
