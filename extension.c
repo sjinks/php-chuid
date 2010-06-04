@@ -23,11 +23,10 @@ static int chuid_zend_startup(zend_extension* extension)
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
-	return
 #if COMPILE_DL_CHUID
-		zend_startup_module(&chuid_module_entry)
+	return zend_startup_module(&chuid_module_entry);
 #else
-		SUCCESS;
+	return SUCCESS;
 #endif
 }
 
