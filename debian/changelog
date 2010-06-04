@@ -1,4 +1,4 @@
-php-chuid (0.3.5-1~lucid~sj1) lucid; urgency=low
+php-chuid (0.3.5-1ppa1) lucid; urgency=low
 
   * LP #588092;
   * LP #588110;
