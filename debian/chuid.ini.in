@@ -1,0 +1,10 @@
+zend_extension = @EXTDIR@/chuid.so
+
+chuid.enabled = 0
+chuid.disable_posix_setuid_family = 1
+chuid.never_root = 1
+chuid.cli_disable = 1
+chuid.be_secure = 0
+chuid.default_uid = 65534
+chuid.default_gid = 65534
+chuid.global_chroot =
