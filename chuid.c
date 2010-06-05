@@ -51,7 +51,11 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * </TABLE>
  */
 PHP_INI_BEGIN()
+#if COMPILE_DL_CHUID
 	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+#else
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+#endif
 	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM, OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
