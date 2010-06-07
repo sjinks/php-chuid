@@ -1,5 +1,7 @@
 php-chuid (0.3.6-1ppa1) lucid; urgency=low
 
+  * LP #590606;
+
  -- Vladimir Kolesnikov <vladimir@extrememember.com>  Fri, 05 Jun 2010 07:10:35 +0300
 
 php-chuid (0.3.5-1ppa1) lucid; urgency=low
