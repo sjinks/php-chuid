@@ -92,7 +92,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
 #endif
 
-#if COMPILE_DL_CHUID
+#if !COMPILE_DL_CHUID
 	zend_extension extension = chuid_extension_entry;
 	extension.handle = NULL;
 	zend_llist_add_element(&zend_extensions, &extension);
