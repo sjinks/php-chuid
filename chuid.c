@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.5
+ * @version 0.3.6
  * @brief PHP CHUID Module
  */
 
@@ -51,7 +51,11 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * </TABLE>
  */
 PHP_INI_BEGIN()
+#if COMPILE_DL_CHUID
 	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+#else
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+#endif
 	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM, OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
@@ -88,7 +92,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
 #endif
 
-#if COMPILE_DL_CHUID
+#if !COMPILE_DL_CHUID
 	zend_extension extension = chuid_extension_entry;
 	extension.handle = NULL;
 	zend_llist_add_element(&zend_extensions, &extension);
