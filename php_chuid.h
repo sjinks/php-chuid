@@ -22,7 +22,7 @@
 #define PHP_CHUID_EXTVER    "0.3.6" /**< Extension version */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
 #define PHP_CHUID_URL       "http://blog.sjinks.pro/"
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2010"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
