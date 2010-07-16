@@ -88,10 +88,6 @@ static PHP_MINIT_FUNCTION(chuid)
 	int num_caps = 0;
 	cap_value_t caps[4];
 
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MINIT");
-#endif
-
 #if !COMPILE_DL_CHUID
 	zend_extension extension = chuid_extension_entry;
 	extension.handle = NULL;
@@ -191,10 +187,6 @@ static PHP_MINIT_FUNCTION(chuid)
  */
 static PHP_MSHUTDOWN_FUNCTION(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "MSHUTDOWN");
-#endif
-
 	if (0 != CHUID_G(enabled) && 0 != CHUID_G(disable_setuid)) {
 		zend_hash_clean(&blacklisted_functions);
 		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
@@ -215,10 +207,6 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
  */
 static PHP_GINIT_FUNCTION(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "GINIT");
-#endif
-
 	globals_constructor(chuid_globals);
 }
 
@@ -226,10 +214,6 @@ static PHP_GINIT_FUNCTION(chuid)
 
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Globals Constructor");
-#endif
-
 	globals_constructor(chuid_globals);
 }
 
@@ -263,10 +247,6 @@ static PHP_MINFO_FUNCTION(chuid)
  */
 static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "post-deactivate");
-#endif
-
 	TSRMLS_FETCH();
 
 	deactivate(TSRMLS_C);

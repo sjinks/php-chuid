@@ -13,13 +13,6 @@ zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
 
 static int chuid_zend_startup(zend_extension* extension)
 {
-#ifdef DEBUG
-	fprintf(stderr, "Zend Startup, %s\n", extension->name);
-#	ifdef WITH_CAP_LIBRARY
-	fprintf(stderr, "WITH_CAP_LIBRARY: yes\n");
-#	endif
-#endif
-
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
@@ -39,10 +32,6 @@ static int chuid_zend_startup(zend_extension* extension)
  */
 static void chuid_zend_activate(void)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Zend Activate");
-#endif
-
 	TSRMLS_FETCH();
 
 	if (1 == CHUID_G(active)) {
@@ -58,10 +47,6 @@ static void chuid_zend_activate(void)
 
 static void chuid_zend_deactivate(void)
 {
-#ifdef DEBUG
-	fprintf(stderr, "%s: %s\n", PHP_CHUID_EXTNAME, "Zend Dectivate");
-#endif
-
 	deactivate();
 }
 #endif
