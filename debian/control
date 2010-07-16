@@ -5,7 +5,6 @@ Maintainer: Vladimir Kolesnikov <vladimir@extrememember.com>
 Build-Depends: debhelper (>= 7.0.50~), php5-dev, libcap-dev
 Standards-Version: 3.8.4
 Vcs-Bzr: lp:php-chuid
-Homepage: http://blog.sjinks.pro/
 
 Package: php5-chuid
 Architecture: any
