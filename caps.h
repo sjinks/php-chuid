@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.3.5
+ * @version 0.3.6
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — definitions
  */
