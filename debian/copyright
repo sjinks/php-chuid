@@ -7,11 +7,11 @@ Upstream Author:
 
 Copyright:
 
-    Copyright (C) 2009 Vladimir Kolesnikov
+    Copyright (C) 2009-2010 Vladimir Kolesnikov
 
 License:
 
-    Copyright (c) 2009, Vladimir Kolesnikov
+    Copyright (c) 2009-2010, Vladimir Kolesnikov
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -37,4 +37,4 @@ License:
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The Debian packaging is (C) 2009, Vladimir Kolesnikov <vladimir@extrememember.com> and
-is licensed under the BSD License, see `/usr/share/common-licenses/BSD'.
+is licensed under the BSD License, see <http://www.opensource.org/licenses/bsd-license.php>.
