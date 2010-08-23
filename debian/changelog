@@ -1,3 +1,9 @@
+php-chuid (0.3.6-1ppa2) lucid; urgency=low
+
+  * Bump Standards-Version (LP #622759)
+
+ -- Vladimir Kolesnikov <vladimir@extrememember.com>  Fri, 23 Aug 2010 17:36:40 +0300
+
 php-chuid (0.3.6-1ppa1) lucid; urgency=low
 
   * LP #590606;
