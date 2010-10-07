@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.3.6.1
  * @brief PHP CHUID Module
  */
 
@@ -92,6 +92,9 @@ static PHP_MINIT_FUNCTION(chuid)
 	zend_extension extension = chuid_extension_entry;
 	extension.handle = NULL;
 	zend_llist_add_element(&zend_extensions, &extension);
+
+	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 #endif
 
 #ifndef PHP_GINIT

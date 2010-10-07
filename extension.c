@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.3.6.1
  * @brief Zend Extensions related stuff — implementation
  */
 
@@ -13,10 +13,10 @@ zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
 
 static int chuid_zend_startup(zend_extension* extension)
 {
+#if COMPILE_DL_CHUID
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
-#if COMPILE_DL_CHUID
 	return zend_startup_module(&chuid_module_entry);
 #else
 	return SUCCESS;
@@ -90,4 +90,3 @@ zend_extension chuid_extension_entry = {
 #if COMPILE_DL_CHUID
 ZEND_EXTENSION();
 #endif
-
