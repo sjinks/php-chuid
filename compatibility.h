@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.4
  * @brief Compatibilty related stuff — definitions
  */
 
@@ -51,4 +51,3 @@ PHPCHUID_VISIBILITY_HIDDEN void my_getuids(uid_t* restrict ruid, uid_t* restrict
 PHPCHUID_VISIBILITY_HIDDEN void my_getgids(gid_t* restrict rgid, gid_t* restrict egid);
 
 #endif /* PHPCHUID_COMPATIBILITY_H_ */
-

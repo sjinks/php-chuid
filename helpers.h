@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.4
  * @brief Helper functions — definitions
  */
 
@@ -40,4 +40,3 @@ PHPCHUID_VISIBILITY_HIDDEN void deactivate(TSRMLS_D);
 PHPCHUID_VISIBILITY_HIDDEN void globals_constructor(zend_chuid_globals* chuid_globals);
 
 #endif /* PHPCHUID_HELPERS_H_ */
-

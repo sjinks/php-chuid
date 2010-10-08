@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6.1
+ * @version 0.4
  * @brief PHP CHUID Module
  */
 
@@ -294,4 +294,3 @@ zend_module_entry chuid_module_entry = {
 	STANDARD_MODULE_PROPERTIES
 #endif
 };
-

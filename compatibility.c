@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.4
  * @brief Compatibilty related stuff — implementation
  */
 
@@ -92,4 +92,3 @@ void my_getgids(gid_t* restrict rgid, gid_t* restrict egid)
 	if (NULL != rgid) *rgid = r;
 	if (NULL != egid) *egid = e;
 }
-

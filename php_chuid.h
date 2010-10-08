@@ -7,7 +7,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6.1
+ * @version 0.4
  * @brief Common include file
  */
 
@@ -19,7 +19,7 @@
 #define PHP_CHUID_H
 
 #define PHP_CHUID_EXTNAME   "chuid"   /**< Internal extension name */
-#define PHP_CHUID_EXTVER    "0.3.6.1" /**< Extension version */
+#define PHP_CHUID_EXTVER    "0.4"     /**< Extension version */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
 #define PHP_CHUID_URL       "http://blog.sjinks.pro/"
 #define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2010"
@@ -130,4 +130,3 @@ ZEND_END_MODULE_GLOBALS(chuid)
 PHPCHUID_VISIBILITY_HIDDEN extern ZEND_DECLARE_MODULE_GLOBALS(chuid);
 
 #endif
-

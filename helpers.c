@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.3.6
+ * @version 0.4
  * @brief Helper functions — implementation
  */
 
@@ -258,4 +258,3 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 	chuid_globals->active = 0;
 	chuid_globals->global_chroot = NULL;
 }
-

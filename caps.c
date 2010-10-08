@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.3.6
+ * @version 0.4
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — implementation
  */
@@ -101,4 +101,3 @@ int drop_capabilities(int num_caps, cap_value_t* cap_list)
 
 	return retval;
 }
-
