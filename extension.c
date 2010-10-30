@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4
+ * @version 0.4.1
  * @brief Zend Extensions related stuff — implementation
  */
 
@@ -54,7 +54,7 @@ static void chuid_zend_deactivate(void)
 #if COMPILE_DL_CHUID
 ZEND_DLEXPORT
 #endif
-zend_extension chuid_extension_entry = {
+zend_extension XXX_EXTENSION_ENTRY = {
 	PHP_CHUID_EXTNAME,
 	PHP_CHUID_EXTVER,
 	PHP_CHUID_AUTHOR,

@@ -7,7 +7,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4
+ * @version 0.4.1
  * @brief Common include file
  */
 
@@ -18,10 +18,31 @@
 #ifndef PHP_CHUID_H
 #define PHP_CHUID_H
 
-#define PHP_CHUID_EXTNAME   "chuid"   /**< Internal extension name */
-#define PHP_CHUID_EXTVER    "0.4"     /**< Extension version */
+/**
+ * @headerfile php_chuid.h
+ * @brief Internal extension name
+ */
+#define PHP_CHUID_EXTNAME   "chuid"
+
+/**
+ * @headerfile php_chuid.h
+ * @brief Extension version
+ */
+#define PHP_CHUID_EXTVER    "0.4.1"
+
+/**
+ * @headerfile php_chuid.h
+ */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
+
+/**
+ * @headerfile php_chuid.h
+ */
 #define PHP_CHUID_URL       "http://blog.sjinks.pro/"
+
+/**
+ * @headerfile php_chuid.h
+ */
 #define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2010"
 
 #ifdef HAVE_CONFIG_H
@@ -44,6 +65,7 @@
 /**
  * @def CHUID_G(v)
  * @brief Provides thread safe acccess to the global @c v (stored in @c chuid_globals)
+ * @headerfile php_chuid.h
  */
 #ifdef ZTS
 #	include "TSRM.h"
@@ -55,6 +77,7 @@
 /**
  * @def PHPCHUID_VISIBILITY_HIDDEN
  * @brief Prevents the name from being exported outside the shared module
+ * @headerfile php_chuid.h
  */
 #ifdef DOXYGEN
 #	undef PHPCHUID_VISIBILITY_HIDDEN
@@ -68,6 +91,7 @@
 /**
  * @def PHPCHUID_ERROR(severity, format, ...)
  * @brief Convenience macro to report an error
+ * @headerfile php_chuid.h
  */
 #ifdef DEBUG
 #	define PHPCHUID_ERROR(severity, format, ...) \
@@ -88,12 +112,20 @@ PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data
  * This one is required by php/main/internal_functions.c when chuid is built statically
  *
  * @def phpext_chuid_ptr
+ * @headerfile php_chuid.h
  */
 #define phpext_chuid_ptr &chuid_module_entry
 
+/**
+ * @def XXX_EXTENSION_ENTRY
+ * @headerfile php_chuid.h
+ * @brief @c zend_extension variable name - must be @c zend_extension_entry for the dynamically loaded module and must be unqiue name for the compiled-in module
+ */
 #if COMPILE_DL_CHUID
-extern ZEND_DLEXPORT zend_extension chuid_extension_entry;
+#	define XXX_EXTENSION_ENTRY zend_extension_entry
+extern ZEND_DLEXPORT zend_extension zend_extension_entry;
 #else
+#	define XXX_EXTENSION_ENTRY chuid_extension_entry
 PHPCHUID_VISIBILITY_HIDDEN extern zend_extension chuid_extension_entry;
 #endif
 
