@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4
+ * @version 0.4.1
  * @brief PHP CHUID Module
  */
 
@@ -89,7 +89,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	cap_value_t caps[4];
 
 #if !COMPILE_DL_CHUID
-	zend_extension extension = chuid_extension_entry;
+	zend_extension extension = XXX_EXTENSION_ENTRY;
 	extension.handle = NULL;
 	zend_llist_add_element(&zend_extensions, &extension);
 
