@@ -37,4 +37,3 @@ override_dh_strip:
 override_dh_gencontrol:
 	echo "php:Depends=phpapi-`php-config5 --phpapi`" >> debian/php5-chuid.substvars
 	dh_gencontrol
-

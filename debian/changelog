@@ -1,3 +1,9 @@
+php-chuid (0.4-ppa1) maverick; urgency=low
+
+  * LP #668608
+
+ -- Vladimir Kolesnikov <vladimir@extrememember.com>  Sat, 30 Oct 2010 06:09:12 +0300
+
 php-chuid (0.3.6-1ppa2) lucid; urgency=low
 
   * Bump Standards-Version (LP #622759)
