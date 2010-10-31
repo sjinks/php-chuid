@@ -159,7 +159,6 @@ static int do_set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 
 /**
  * @brief Sets the default {R,E}UID/{R,E}GID according to the INI settings
- * @param method Which method should be used to set UIDs and GIDs
  * @return Whether call to @c do_set_guids() succeeded
  * @retval SUCCESS OK
  * @retval FAILURE Failure
@@ -218,6 +217,9 @@ int change_uids(TSRMLS_D)
 	return do_set_guids(uid, gid TSRMLS_CC);
 }
 
+/**
+ * If the module is active, sets back the original UID/GID and depending on the ini settings, escapes the chroot.
+ */
 void deactivate(TSRMLS_D)
 {
 	if (1 == CHUID_G(active)) {

@@ -36,7 +36,16 @@ PHPCHUID_VISIBILITY_HIDDEN int do_chroot(const char* root TSRMLS_DC);
  */
 PHPCHUID_VISIBILITY_HIDDEN int change_uids(TSRMLS_D);
 
+/**
+ * @brief Deactivation function
+ */
 PHPCHUID_VISIBILITY_HIDDEN void deactivate(TSRMLS_D);
+
+/**
+ * @brief Globals constructor
+ * @param chuid_globals Pointer to the module globals
+ * @see zend_chuid_globals
+ */
 PHPCHUID_VISIBILITY_HIDDEN void globals_constructor(zend_chuid_globals* chuid_globals);
 
 #endif /* PHPCHUID_HELPERS_H_ */

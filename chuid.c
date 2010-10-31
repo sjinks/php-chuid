@@ -30,8 +30,6 @@ static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
 #	define OnUpdateLong OnUpdateInt
 #endif
 
-zend_bool be_secure = 1;          /**< Whether we should turn startup warnings to errors */
-
 /**
  * @brief Module globals
  */
@@ -41,18 +39,17 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * @brief INI File Entries
  *
  * <TABLE>
- * <TR><TD>@c chuid.enabled</TD><TD>@c bool</TD><TD>Whether this extension should be enabled</TD></TR>
- * <TR><TD>@c chuid.disable_posix_setuid_family</TD><TD>@c bool</TD><TD>Disables @c posix_seteuid(), @c posix_setegid(), @c posix_setuid() and @c posix_setgid() functions</TD></TR>
- * <TR><TD>@c chuid.never_root</TD><TD>@c bool</TD><TD>Forces the change to the @c default_uid/@c default_gid of the UID/GID computes to be 0 (root)</TD></TR>
- * <TR><TD>@c chuid.cli_disable</TD><TD>@c bool</TD><TD>Do not try to modify UIDs/GIDs when SAPI is CLI</TD></TR>
- * <TR><TD>@c chuid.be_secure</TD><TD>@c bool</TD><TD>Turns some warnings to errors (for the sake of security)</TD></TR>
- * <TR><TD>@c chuid.no_set_gid</TD><TD>@c bool</TD><TD>Do not change GID</TD></TR>
- * <TR><TD>@c chuid.default_uid</TD><TD>@c int</TD><TD>Default UID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the UID of the @c DOCUMENT_ROOT is 0</TD></TR>
- * <TR><TD>@c chuid.default_gid</TD><TD>@c int</TD><TD>Default GID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the GID of the @c DOCUMENT_ROOT is 0</TD></TR>
- * <TR><TD>@c chuid.global_chroot</TD><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
- * <TR><TD>@c chuid.enable_per_request_chroot</TD><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
- * <TR><TD>@c chuid.chroot_to</TD><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
- * <TR><TD>@c chuid.force_gid</TD><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
+ * <TR><TH>@c chuid.enabled</TH><TD>@c bool</TD><TD>Whether this extension should be enabled</TD></TR>
+ * <TR><TH>@c chuid.disable_posix_setuid_family</TH><TD>@c bool</TD><TD>Disables @c posix_seteuid(), @c posix_setegid(), @c posix_setuid() and @c posix_setgid() functions</TD></TR>
+ * <TR><TH>@c chuid.never_root</TH><TD>@c bool</TD><TD>Forces the change to the @c default_uid/@c default_gid of the UID/GID computes to be 0 (root)</TD></TR>
+ * <TR><TH>@c chuid.cli_disable</TH><TD>@c bool</TD><TD>Do not try to modify UIDs/GIDs when SAPI is CLI</TD></TR>
+ * <TR><TH>@c chuid.no_set_gid</TH><TD>@c bool</TD><TD>Do not change GID</TD></TR>
+ * <TR><TH>@c chuid.default_uid</TH><TD>@c int</TD><TD>Default UID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the UID of the @c DOCUMENT_ROOT is 0</TD></TR>
+ * <TR><TH>@c chuid.default_gid</TH><TD>@c int</TD><TD>Default GID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the GID of the @c DOCUMENT_ROOT is 0</TD></TR>
+ * <TR><TH>@c chuid.global_chroot</TH><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
+ * <TR><TH>@c chuid.enable_per_request_chroot</TH><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
+ * <TR><TH>@c chuid.chroot_to</TH><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
+ * <TR><TH>@c chuid.force_gid</TH><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
 PHP_INI_BEGIN()
@@ -64,7 +61,6 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM, OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.be_secure",                   "1",     PHP_INI_SYSTEM, OnUpdateBool,   be_secure,      zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM, OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
@@ -92,8 +88,6 @@ static PHP_MINIT_FUNCTION(chuid)
 	int can_chroot          = -1;
 	int can_setgid          = -1;
 	int can_setuid          = -1;
-	int severity;
-	int retval;
 	long int forced_gid;
 	zend_bool no_gid;
 	int num_caps = 0;
@@ -130,15 +124,12 @@ static PHP_MINIT_FUNCTION(chuid)
 		return SUCCESS;
 	}
 
-	be_secure  = CHUID_G(be_secure);
-	severity   = (!be_secure) ? E_WARNING : E_CORE_ERROR;
-	retval     = (!be_secure) ? SUCCESS : FAILURE;
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);
 
 	disable_posix_setuids(TSRMLS_C);
 
-	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid) && be_secure) {
+	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid)) {
 		zend_error(E_CORE_ERROR, "check_capabilities() failed");
 		return FAILURE;
 	}
@@ -174,7 +165,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	}
 
 	if (global_chroot) {
-		if (FAILURE == do_chroot(global_chroot TSRMLS_CC) && be_secure) {
+		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
 			return FAILURE;
 		}
 	}
@@ -182,8 +173,8 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
-			PHPCHUID_ERROR(severity, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
-			return retval;
+			PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
+			return FAILURE;
 		}
 
 		if (forced_gid > 0) {
@@ -263,7 +254,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
  * @brief Globals Constructor
  * @param chuid_globals Pointer to the globals container
  *
- * Gets the original values of Effective and Eeal User and Group IDs and sets @c global_chroot to @c NULL and @c active to 0.
+ * Gets the original values of Effective and Real User and Group IDs and sets @c global_chroot to @c NULL and @c active to 0.
  */
 static PHP_GINIT_FUNCTION(chuid)
 {
@@ -272,6 +263,12 @@ static PHP_GINIT_FUNCTION(chuid)
 
 #else
 
+/**
+ * @brief Globals Constructor
+ * @param chuid_globals Pointer to the globals container
+ *
+ * Gets the original values of Effective and Real User and Group IDs and sets @c global_chroot to @c NULL and @c active to 0.
+ */
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 {
 	globals_constructor(chuid_globals);

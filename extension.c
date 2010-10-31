@@ -11,6 +11,14 @@
 zend_bool sapi_is_cli = 0; /**< Whether SAPI is CLI */
 zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
 
+/**
+ * @brief Extension startup function
+ * @param extension Pointer to @c zend_extension structure
+ * @return Whether extension startup is successful
+ * @retval SUCCESS Startup is successful
+ * @retval FAILURE Startup is not successful
+ * @details Does nothing for compiled-in module; for Zend Extension registers and activates PHP extension module
+ */
 static int chuid_zend_startup(zend_extension* extension)
 {
 #if COMPILE_DL_CHUID
@@ -62,7 +70,7 @@ static void chuid_zend_deactivate(void)
 }
 #endif
 
-#if COMPILE_DL_CHUID
+#if COMPILE_DL_CHUID && !defined DOXYGEN
 ZEND_DLEXPORT
 #endif
 zend_extension XXX_EXTENSION_ENTRY = {
@@ -95,9 +103,19 @@ zend_extension XXX_EXTENSION_ENTRY = {
 };
 
 #ifndef ZEND_EXT_API
+/**
+ * To solve compatibility issues
+ */
 #	define ZEND_EXT_API ZEND_DLEXPORT
 #endif
 
 #if COMPILE_DL_CHUID
+#	ifdef DOXYGEN
+#		undef ZEND_EXT_API
+#		define ZEND_EXT_API
+#	endif
+/**
+ * @brief Extension version information, used internally by Zend
+ */
 ZEND_EXTENSION();
 #endif

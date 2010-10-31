@@ -1,6 +1,9 @@
-php-chuid (0.4-ppa1) maverick; urgency=low
+php-chuid (0.4.1-ppa1) maverick; urgency=low
 
   * LP #668608
+  * Dropped chuid.be_secure ini setting
+  * Per-request chroot
+  * Improved chroot functionality
 
  -- Vladimir Kolesnikov <vladimir@extrememember.com>  Sat, 30 Oct 2010 06:09:12 +0300
 

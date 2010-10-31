@@ -12,6 +12,7 @@
  */
 
 #ifdef DOXYGEN
+#	include "macros.h"
 #	undef PHP_CHUID_H
 #endif
 
@@ -32,13 +33,15 @@
 
 /**
  * @headerfile php_chuid.h
+ * @brief Extension author
  */
 #define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
 
 /**
  * @headerfile php_chuid.h
+ * @brief Extension home page
  */
-#define PHP_CHUID_URL       "http://blog.sjinks.pro/"
+#define PHP_CHUID_URL       "https://launchpad.net/php-chuid"
 
 /**
  * @headerfile php_chuid.h
@@ -65,6 +68,7 @@
 /**
  * @def CHUID_G(v)
  * @brief Provides thread safe acccess to the global @c v (stored in @c chuid_globals)
+ * @see @c chuid_globals
  * @headerfile php_chuid.h
  */
 #ifdef ZTS
@@ -103,7 +107,6 @@
 #	define PHPCHUID_ERROR(severity, format, ...) zend_error((severity), (format), __VA_ARGS__)
 #endif
 
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool be_secure;
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
@@ -119,21 +122,35 @@ PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data
 /**
  * @def XXX_EXTENSION_ENTRY
  * @headerfile php_chuid.h
- * @brief @c zend_extension variable name - must be @c zend_extension_entry for the dynamically loaded module and must be unqiue name for the compiled-in module
+ * @brief @c zend_extension variable name — must be @c zend_extension_entry for the dynamically loaded module and must be unqiue name for the compiled-in module
  */
+
 #if COMPILE_DL_CHUID
 #	define XXX_EXTENSION_ENTRY zend_extension_entry
-extern ZEND_DLEXPORT zend_extension zend_extension_entry;
+extern
+#ifndef DOXYGEN
+ZEND_DLEXPORT
+#endif
+/**
+ * @brief Zend Extension entry
+ */
+zend_extension zend_extension_entry;
 #else
 #	define XXX_EXTENSION_ENTRY chuid_extension_entry
+/**
+ * @brief Zend Extension entry
+ */
 PHPCHUID_VISIBILITY_HIDDEN extern zend_extension chuid_extension_entry;
 #endif
 
+/**
+ * @brief UID/GID setting mode
+ */
 enum change_xid_mode_t {
-	cxm_setuid,
-	cxm_setresuid,
-	cxm_setxid,
-	cxm_setresxid
+	cxm_setuid,    /**< Use @c setuid() */
+	cxm_setresuid, /**< Use @c setresuid() */
+	cxm_setxid,    /**< Use @c setuid() and @c setgid() */
+	cxm_setresxid  /**< use @c setresuid() and @c setresgid() */
 };
 
 /**
@@ -149,7 +166,6 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool disable_setuid;    /**< Whether to disable posix_set{e,}{u,g}id() functions */
 	zend_bool active;            /**< Internal flag */
 	zend_bool never_root;        /**< Never run the request as root */
-	zend_bool be_secure;         /**< Turn startup warnings to errors */
 	zend_bool cli_disable;       /**< Do not change UIDs/GIDs when SAPI is CLI */
 	long int default_uid;        /**< Default UID */
 	long int default_gid;        /**< Default GID */

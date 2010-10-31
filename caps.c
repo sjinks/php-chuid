@@ -1,8 +1,9 @@
 /**
- * @file
+ * @file caps.c
  * @version 0.4
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
  * @brief Interface to libcap — implementation
+ * @see http://www.kernel.org/doc/man-pages/online/pages/man7/capabilities.7.html
  */
 
 #include <assert.h>
@@ -57,7 +58,7 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 }
 
 /**
- * @todo In theory, @c cap_set_flag() may fail. Maybe add a check?
+ * @todo In theory, @c cap_set_flag() may fail, maybe add a check?
  * @note There is no sense in @c CAP_SETUID and @c CAP_SETGID capabilities when ZTS is used, that's is why we drop them if ZTS is detected
  */
 int drop_capabilities(int num_caps, cap_value_t* cap_list)
