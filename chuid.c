@@ -7,6 +7,9 @@
 
 #include "php_chuid.h"
 #include <ext/standard/info.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "compatibility.h"
 #include "caps.h"
 #include "helpers.h"
@@ -47,6 +50,8 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  * <TR><TD>@c chuid.default_uid</TD><TD>@c int</TD><TD>Default UID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the UID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.default_gid</TD><TD>@c int</TD><TD>Default GID. Used when the module is unable to get the @c DOCUMENT_ROOT or when @c chuid.never_root is @c true and the GID of the @c DOCUMENT_ROOT is 0</TD></TR>
  * <TR><TD>@c chuid.global_chroot</TD><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
+ * <TR><TD>@c chuid.enable_per_request_chroot</TD><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
+ * <TR><TD>@c chuid.chroot_to</TD><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
  * <TR><TD>@c chuid.force_gid</TD><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
@@ -63,7 +68,13 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM, OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
+#if HAVE_CHROOT
 	STD_PHP_INI_ENTRY("chuid.global_chroot",                 NULL,    PHP_INI_SYSTEM, OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
+#endif
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM, OnUpdateBool,   per_req_chroot, zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.chroot_to",                     NULL,    PHP_INI_PERDIR, OnUpdateString, req_chroot,     zend_chuid_globals, chuid_globals)
+#endif
 	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM, OnUpdateLong,   forced_gid,     zend_chuid_globals, chuid_globals)
 PHP_INI_END()
 
@@ -86,7 +97,15 @@ static PHP_MINIT_FUNCTION(chuid)
 	long int forced_gid;
 	zend_bool no_gid;
 	int num_caps = 0;
-	cap_value_t caps[4];
+	cap_value_t caps[5];
+#ifdef HAVE_CHROOT
+	zend_bool need_chroot;
+	char* global_chroot;
+#if !defined(ZTS) && HAVE_FCHDIR
+	int root_fd;
+	zend_bool per_req_chroot;
+#endif
+#endif /* HAVE_CHROOT */
 
 #if !COMPILE_DL_CHUID
 	zend_extension extension = XXX_EXTENSION_ENTRY;
@@ -107,29 +126,61 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	REGISTER_INI_ENTRIES();
 
-	if (0 == CHUID_G(enabled)) {
+	if (!CHUID_G(enabled)) {
 		return SUCCESS;
 	}
 
 	be_secure  = CHUID_G(be_secure);
-	severity   = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
-	retval     = (0 == be_secure) ? SUCCESS : FAILURE;
+	severity   = (!be_secure) ? E_WARNING : E_CORE_ERROR;
+	retval     = (!be_secure) ? SUCCESS : FAILURE;
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);
 
 	disable_posix_setuids(TSRMLS_C);
 
-	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid) && 0 != be_secure) {
+	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid) && be_secure) {
 		zend_error(E_CORE_ERROR, "check_capabilities() failed");
 		return FAILURE;
 	}
 
-	if (FAILURE == do_global_chroot(can_chroot TSRMLS_CC) && 0 != be_secure) {
-		zend_error(E_CORE_ERROR, "do_global_chroot() failed");
+#if HAVE_CHROOT
+	global_chroot = CHUID_G(global_chroot);
+	need_chroot   = (global_chroot && *global_chroot && '/' == *global_chroot);
+	if (!need_chroot) {
+		global_chroot = NULL;
+	}
+
+#if !defined(ZTS) && HAVE_FCHDIR
+	if (need_chroot) {
+		CHUID_G(per_req_chroot) = 0;
+	}
+
+	per_req_chroot = CHUID_G(per_req_chroot);
+	if (per_req_chroot) {
+		root_fd = open("/", O_RDONLY);
+		if (root_fd < 0) {
+			PHPCHUID_ERROR(E_CORE_ERROR, "open(\"/\", O_RDONLY) failed: %s", strerror(errno));
+			return FAILURE;
+		}
+
+		CHUID_G(root_fd) = root_fd;
+		need_chroot      = 1;
+	}
+#endif
+
+	if ((int)CAP_CLEAR == can_chroot && need_chroot) {
+		PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires CAP_SYS_ROOT capability (or root privileges) for chuid.global_chroot/chuid.per_request_chroot to take effect");
 		return FAILURE;
 	}
 
-	if (0 == sapi_is_cli || 0 == CHUID_G(cli_disable)) {
+	if (global_chroot) {
+		if (FAILURE == do_chroot(global_chroot TSRMLS_CC) && be_secure) {
+			return FAILURE;
+		}
+	}
+#endif /* HAVE_CHROOT */
+
+	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
 			PHPCHUID_ERROR(severity, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
 			return retval;
@@ -149,6 +200,12 @@ static PHP_MINIT_FUNCTION(chuid)
 			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
 		}
 
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+		if (need_chroot) {
+			caps[num_caps] = CAP_SYS_CHROOT;
+			++num_caps;
+		}
+#endif
 
 #if defined(WITH_CAP_LIBRARY) && !defined(ZTS)
 		if (forced_gid < 1 && 0 == no_gid) {

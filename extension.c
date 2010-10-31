@@ -35,7 +35,18 @@ static void chuid_zend_activate(void)
 	TSRMLS_FETCH();
 
 	if (1 == CHUID_G(active)) {
-		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+		if (CHUID_G(per_req_chroot)) {
+			char* root = CHUID_G(req_chroot);
+			if (root && *root && '/' == *root) {
+				int res = do_chroot(root TSRMLS_CC);
+				if (FAILURE == res) {
+					zend_bailout();
+				}
+			}
+		}
+#endif
+		if (sapi_is_cli || sapi_is_cgi) {
 			CHUID_G(active) = 0;
 		}
 

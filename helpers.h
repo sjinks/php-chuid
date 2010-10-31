@@ -20,13 +20,13 @@
 PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(TSRMLS_D);
 
 /**
- * @brief <code>chroot()</code>'s to the directory specified in @c chuid.global_chroot
- * @param can_chroot Whether the user has @c CAP_SYS_CHROOT capability
+ * @brief <code>chroot()</code>'s to the directory specified by the @c root parameter
+ * @param root New root directory
  * @return Whether the operation was successful
- * @retval 0 Yes
- * @retval -1 No (@c chroot() or @c chdir() failed, @c errno will be set)
+ * @retval SUCCESS Yes
+ * @retval FAILURE No (@c chroot() or @c chdir() failed, @c errno will be set)
  */
-PHPCHUID_VISIBILITY_HIDDEN int do_global_chroot(int can_chroot TSRMLS_DC);
+PHPCHUID_VISIBILITY_HIDDEN int do_chroot(const char* root TSRMLS_DC);
 
 /**
  * @brief Changes {R,E}UID/{R,E}GID to the owner of the DOCUMENT_ROOT

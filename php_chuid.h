@@ -155,7 +155,14 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	long int default_gid;        /**< Default GID */
 	long int forced_gid;         /**< Forced GID */
 	zend_bool no_set_gid;        /**< Do not set GID */
+#ifdef HAVE_CHROOT
 	char* global_chroot;         /**< Global chroot() directory */
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+	zend_bool per_req_chroot;    /**< Whether per-request @c chroot() is enabled */
+	char* req_chroot;            /**< Per-request @c chroot */
+	int root_fd;                 /**< Root directory descriptor */
+#endif
+#endif
 	enum change_xid_mode_t mode; /**< Change UID/GID mode */
 ZEND_END_MODULE_GLOBALS(chuid)
 

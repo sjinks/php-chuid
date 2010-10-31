@@ -89,24 +89,15 @@ void disable_posix_setuids(TSRMLS_D)
 
 /**
  * @note If the call to @c chroot() succeeds, the function immediately <code>chdir()</code>'s to the target directory
- * @note @c chuid_globals.global_chroot must begin with <code>/</code> — the path must be absolute
+ * @note @c root must begin with <code>/</code> — the path must be absolute
  */
-int do_global_chroot(int can_chroot TSRMLS_DC)
+int do_chroot(const char* root TSRMLS_DC)
 {
-	int severity        = (0 == be_secure) ? E_WARNING : E_CORE_ERROR;
-	char* global_chroot = CHUID_G(global_chroot);
+	if (root && *root && '/' == *root) {
+		int res;
 
-	if (NULL != global_chroot && '\0' != *global_chroot && '/' == *global_chroot) {
-		if ((int)CAP_CLEAR != can_chroot) {
-			int res;
-
-			res = chroot(global_chroot); if (0 != res) { PHPCHUID_ERROR(severity, "chroot(%s): %s", global_chroot, strerror(errno)); return FAILURE; }
-			res = chdir(global_chroot);  if (0 != res) { PHPCHUID_ERROR(severity, "chdir(%s): %s", global_chroot, strerror(errno));  return FAILURE; }
-		}
-		else {
-			PHPCHUID_ERROR(severity, "%s", "chuid module requires CAP_SYS_ROOT capability (or root privileges) for chuid.global_chroot to take effect");
-			return FAILURE;
-		}
+		res = chroot(root); if (res) { PHPCHUID_ERROR(E_CORE_ERROR, "chroot(\"%s\"): %s", root, strerror(errno)); return FAILURE; }
+		res = chdir(root);  if (res) { PHPCHUID_ERROR(E_CORE_ERROR, "chdir(\"%s\"): %s", root, strerror(errno));  return FAILURE; }
 	}
 
 	return SUCCESS;
@@ -248,6 +239,26 @@ void deactivate(TSRMLS_D)
 				PHPCHUID_ERROR(E_ERROR, "my_setgids(%d, %d, %d): %s", rgid, egid, (int)mode, strerror(errno));
 			}
 		}
+
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+		if (CHUID_G(per_req_chroot)) {
+			char* root = CHUID_G(req_chroot);
+			if (root && *root && '/' == *root) {
+				int res;
+
+				res = fchdir(CHUID_G(root_fd));
+				if (res) {
+					PHPCHUID_ERROR(E_ERROR, "fchdir() failed: %s", strerror(errno));
+				}
+				else {
+					res = chroot(".");
+					if (res) {
+						PHPCHUID_ERROR(E_ERROR, "chroot(\".\") failed: %s", strerror(errno));
+					}
+				}
+			}
+		}
+#endif
 	}
 }
 
@@ -256,5 +267,12 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
 	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
 	chuid_globals->active = 0;
+#if HAVE_CHROOT
 	chuid_globals->global_chroot = NULL;
+#if !defined(ZTS) && HAVE_FCHDIR
+	chuid_globals->per_req_chroot = 0;
+	chuid_globals->req_chroot     = NULL;
+	chuid_globals->root_fd        = -1;
+#endif
+#endif
 }
