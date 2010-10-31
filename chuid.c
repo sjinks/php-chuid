@@ -142,7 +142,7 @@ static PHP_MINIT_FUNCTION(chuid)
 			}
 		}
 
-		if (0 != sapi_is_cli || 0 != sapi_is_cgi) {
+		if (sapi_is_cli || sapi_is_cgi) {
 			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setxid : cxm_setuid;
 		}
 		else {

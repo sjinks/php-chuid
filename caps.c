@@ -58,7 +58,7 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 
 /**
  * @todo In theory, @c cap_set_flag() may fail. Maybe add a check?
- * @note There is no sense in @c CAP_SETUID and @c CAP_SETGID capabilities when ZTS is used, thats is why we drop them if ZTS is detected
+ * @note There is no sense in @c CAP_SETUID and @c CAP_SETGID capabilities when ZTS is used, that's is why we drop them if ZTS is detected
  */
 int drop_capabilities(int num_caps, cap_value_t* cap_list)
 {
