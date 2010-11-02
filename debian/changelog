@@ -4,8 +4,11 @@ php-chuid (0.4.1-ppa1) maverick; urgency=low
   * Dropped chuid.be_secure ini setting
   * Per-request chroot
   * Improved chroot functionality
+  * Code refactoring
+  * nobody/nogroup UID/GID are determined during GINIT phase
+  * LP #669740
 
- -- Vladimir Kolesnikov <vladimir@extrememember.com>  Sat, 30 Oct 2010 06:09:12 +0300
+ -- Vladimir Kolesnikov <vladimir@extrememember.com>  Tue, 02 Nov 2010 15:31:36 +0200
 
 php-chuid (0.3.6-1ppa2) lucid; urgency=low
 

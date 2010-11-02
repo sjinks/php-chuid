@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4
+ * @version 0.4.1
  * @brief Helper functions — implementation
  */
 
@@ -22,6 +22,16 @@ HashTable blacklisted_functions;
  * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
  */
 void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
+
+/**
+ * @brief @c nobody user ID
+ */
+uid_t uid_nobody = 65534;
+
+/**
+ * @brief @c nogroup group ID
+ */
+gid_t gid_nogroup = 65534;
 
 /**
  * @brief Function execution handler
@@ -96,46 +106,17 @@ int do_chroot(const char* root TSRMLS_DC)
 	if (root && *root && '/' == *root) {
 		int res;
 
-		res = chroot(root); if (res) { PHPCHUID_ERROR(E_CORE_ERROR, "chroot(\"%s\"): %s", root, strerror(errno)); return FAILURE; }
 		res = chdir(root);  if (res) { PHPCHUID_ERROR(E_CORE_ERROR, "chdir(\"%s\"): %s", root, strerror(errno));  return FAILURE; }
+		res = chroot(root); if (res) { PHPCHUID_ERROR(E_CORE_ERROR, "chroot(\"%s\"): %s", root, strerror(errno)); return FAILURE; }
 	}
 
 	return SUCCESS;
 }
 
 /**
- * @brief Finds out the UID and GID of @c nobody user.
- * @param uid UID; must not be @c NULL
- * @param gid GID; must not be @c NULL
- * @warning If @c getpwnam("nobody") fails, @c uid and @c gid remain unchanged
- */
-static void who_is_mr_nobody(uid_t* uid, gid_t* gid)
-{
-	struct passwd* pwd = getpwnam("nobody");
-
-	assert(uid != NULL);
-	assert(gid != NULL);
-
-	if (NULL != pwd) {
-		*uid = pwd->pw_uid;
-		*gid = pwd->pw_gid;
-	}
-	else {
-		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
-	}
-}
-
-/**
- * @brief Sets RUID/EUID/SUID and RGID/EGID/SGID
- * @param uid Real and Effective UID
- * @param gid Real and Effective GID
- * @return Whether calls to <code>my_setgids()</code>/<code>my_setuids()</code> were successful
- * @retval SUCCESS OK
- * @retval FAILURE Failure
- *
  * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
  */
-static int do_set_guids(uid_t uid, gid_t gid TSRMLS_DC)
+int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 {
 	int res;
 	enum change_xid_mode_t mode = CHUID_G(mode);
@@ -158,36 +139,27 @@ static int do_set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 }
 
 /**
- * @brief Sets the default {R,E}UID/{R,E}GID according to the INI settings
- * @return Whether call to @c do_set_guids() succeeded
- * @retval SUCCESS OK
- * @retval FAILURE Failure
- * @see do_set_guids(), who_is_mr_nobody()
- * @note If the default UID is 65534, @c nobody user is assumed and its UID/GID are refined by @c who_is_mr_nobody()
+ * Tries to get UID and GID of the owner of the @c DOCUMENT_ROOT.
+ * If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
+ * If default UID is 65534, UID and GID are set to @c nobody and @c nogroup
  */
-static int set_default_guids(TSRMLS_D)
-{
-	gid_t default_gid = (gid_t)CHUID_G(default_gid);
-	uid_t default_uid = (uid_t)CHUID_G(default_uid);
-
-	if (65534 == default_uid) {
-		who_is_mr_nobody(&default_uid, &default_gid);
-	}
-
-	return do_set_guids(default_uid, default_gid TSRMLS_CC);
-}
-
-/**
- * @see set_default_guids()
- * @details Tries to change {R,E}{U,G}ID to the owner of the @c DOCUMENT_ROOT. If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
- */
-int change_uids(TSRMLS_D)
+void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 {
 	char* docroot;
+	char* docroot_corrected;
 	int res;
 	struct stat statbuf;
-	uid_t uid;
-	gid_t gid;
+
+	assert(uid != NULL);
+	assert(gid != NULL);
+
+	*gid = (gid_t)CHUID_G(default_gid);
+	*uid = (uid_t)CHUID_G(default_uid);
+
+	if (65534 == *uid) {
+		*uid = uid_nobody;
+		*gid = gid_nogroup;
+	}
 
 	if (NULL != sapi_module.getenv) {
 		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
@@ -197,24 +169,31 @@ int change_uids(TSRMLS_D)
 	}
 
 	if (NULL == docroot) {
-		return set_default_guids(TSRMLS_C);
+		PHPCHUID_ERROR(E_WARNING, "%s", "Cannot get DOCUMENT_ROOT");
+		return;
 	}
 
-	res = stat(docroot, &statbuf);
+	docroot_corrected = docroot && *docroot ? docroot : "/";
+
+	res = stat(docroot_corrected, &statbuf);
 	if (0 != res) {
-		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot, strerror(errno));
-		return set_default_guids(TSRMLS_C);
+		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
+		return;
 	}
 
-	uid = statbuf.st_uid;
-	gid = statbuf.st_gid;
+	if (CHUID_G(never_root)) {
+		if (0 != statbuf.st_uid) {
+			*uid = statbuf.st_uid;
+		}
 
-	if (0 != CHUID_G(never_root)) {
-		if (0 == uid) { uid = (uid_t)CHUID_G(default_uid); }
-		if (0 == gid) { gid = (gid_t)CHUID_G(default_gid); }
+		if (0 != statbuf.st_gid) {
+			*gid = statbuf.st_gid;
+		}
 	}
-
-	return do_set_guids(uid, gid TSRMLS_CC);
+	else {
+		*uid = statbuf.st_uid;
+		*gid = statbuf.st_gid;
+	}
 }
 
 /**
@@ -222,6 +201,10 @@ int change_uids(TSRMLS_D)
  */
 void deactivate(TSRMLS_D)
 {
+#ifdef DEBUG
+	fprintf(stderr, "deactivate\n");
+#endif
+
 	if (1 == CHUID_G(active)) {
 		int res;
 		uid_t ruid = CHUID_G(ruid);
@@ -244,19 +227,16 @@ void deactivate(TSRMLS_D)
 
 #if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot)) {
-			char* root = CHUID_G(req_chroot);
-			if (root && *root && '/' == *root) {
-				int res;
+			int res;
 
-				res = fchdir(CHUID_G(root_fd));
+			res = fchdir(CHUID_G(root_fd));
+			if (res) {
+				PHPCHUID_ERROR(E_ERROR, "fchdir() failed: %s", strerror(errno));
+			}
+			else {
+				res = chroot(".");
 				if (res) {
-					PHPCHUID_ERROR(E_ERROR, "fchdir() failed: %s", strerror(errno));
-				}
-				else {
-					res = chroot(".");
-					if (res) {
-						PHPCHUID_ERROR(E_ERROR, "chroot(\".\") failed: %s", strerror(errno));
-					}
+					PHPCHUID_ERROR(E_ERROR, "chroot(\".\") failed: %s", strerror(errno));
 				}
 			}
 		}
@@ -266,15 +246,30 @@ void deactivate(TSRMLS_D)
 
 void globals_constructor(zend_chuid_globals* chuid_globals)
 {
+	struct passwd* pwd;
+
 	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
 	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
 	chuid_globals->active = 0;
+
+	errno = 0;
+	pwd   = getpwnam("nobody");
+	if (NULL != pwd) {
+		uid_nobody  = pwd->pw_uid;
+		gid_nogroup = pwd->pw_gid;
+	}
+	else {
+		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
+	}
+
+
 #if HAVE_CHROOT
 	chuid_globals->global_chroot = NULL;
 #if !defined(ZTS) && HAVE_FCHDIR
 	chuid_globals->per_req_chroot = 0;
 	chuid_globals->req_chroot     = NULL;
 	chuid_globals->root_fd        = -1;
+	chuid_globals->chrooted       = 0;
 #endif
 #endif
 }

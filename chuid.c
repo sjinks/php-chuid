@@ -17,7 +17,7 @@
 
 #ifndef PHP_GINIT
 /**
- * @note For pre-5.2 PHPs which fo not have PHP_GINIT and PHP_GSHUTDOWN
+ * @note For pre-5.2 PHPs which do not have PHP_GINIT and PHP_GSHUTDOWN
  * @param chuid_globals Pointer to the extension globals
  */
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
@@ -34,6 +34,33 @@ static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
  * @brief Module globals
  */
 ZEND_DECLARE_MODULE_GLOBALS(chuid);
+
+/**
+ * @brief Displays @c chuid.chroot_to INI entry
+ * @param ini_entry INI entry to display
+ * @param type Whether to display the original or current value
+ */
+static PHP_INI_DISP(chuid_protected_displayer)
+{
+#ifdef DEBUG
+
+	const char* value = ini_entry->value;
+
+	if (ZEND_INI_DISPLAY_ORIG == type && ini_entry->modified) {
+		value = ini_entry->orig_value;
+	}
+
+	if (!value || !*value) {
+		value = "(not set)";
+	}
+
+	php_printf("%s", value);
+#else
+	php_printf("[hidden]");
+#endif
+}
+
+#define CHUID_INI_SYSTEM_OR_PERDIR (PHP_INI_SYSTEM | PHP_INI_PERDIR)
 
 /**
  * @brief INI File Entries
@@ -54,25 +81,27 @@ ZEND_DECLARE_MODULE_GLOBALS(chuid);
  */
 PHP_INI_BEGIN()
 #if COMPILE_DL_CHUID
-	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
 #else
-	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM, OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
 #endif
-	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM, OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM, OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM, OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM, OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM, OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM,             OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM,             OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM,             OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM,             OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
 #if HAVE_CHROOT
-	STD_PHP_INI_ENTRY("chuid.global_chroot",                 NULL,    PHP_INI_SYSTEM, OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.global_chroot",                 "",      PHP_INI_SYSTEM,             OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
 #endif
 #if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
-	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM, OnUpdateBool,   per_req_chroot, zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.chroot_to",                     NULL,    PHP_INI_PERDIR, OnUpdateString, req_chroot,     zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot, zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,     zend_chuid_globals, chuid_globals, chuid_protected_displayer)
 #endif
-	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM, OnUpdateLong,   forced_gid,     zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM,             OnUpdateLong,   forced_gid,     zend_chuid_globals, chuid_globals)
 PHP_INI_END()
+
+#undef CHUID_INI_SYSTEM_OR_PERDIR
 
 /**
  * @brief Module Initialization Routine
@@ -164,6 +193,10 @@ static PHP_MINIT_FUNCTION(chuid)
 		return FAILURE;
 	}
 
+#ifdef DEBUG
+	fprintf(stderr, "Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
+#endif
+
 	if (global_chroot) {
 		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
 			return FAILURE;
@@ -248,6 +281,87 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 	return SUCCESS;
 }
 
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+/**
+ * If @c chroot() was performed, adjusts <code>$_SERVER['DOCUMENT_ROOT']</code>, <code>$_SERVER['SCRIPT_FILENAME']</code>,
+ * <code>$_ENV['DOCUMENT_ROOT']</code> and <code>$_ENV['SCRIPT_FILENAME']</code> by stripping <code>CHUID_G(req_chroot)</code>
+ * from them.
+ *
+ * @brief Request Initialization handler
+ * @param type Module type (persistent or temporary)
+ * @param module_number Module number
+ * @return Whether initialization was successful
+ * @retval SUCCESS Yes
+ * @retval FAILURE No
+ * @todo Throw a warning if the document root lays outside the new root.
+ */
+static PHP_RINIT_FUNCTION(chuid)
+{
+	if (CHUID_G(chrooted)) {
+		zval** var;
+		zval** http_globals = PG(http_globals);
+		char* root = CHUID_G(req_chroot);
+		size_t len = strlen(root);
+
+#	ifdef ZEND_ENGINE_2
+		zend_is_auto_global("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
+		zend_is_auto_global("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
+#	endif
+
+		if (http_globals[TRACK_VARS_SERVER]) {
+			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var)) {
+				if (IS_STRING != Z_TYPE_PP(var)) {
+					convert_to_string_ex(var);
+				}
+
+				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
+					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
+					Z_STRLEN_PP(var) -= len;
+				}
+			}
+
+			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "SCRIPT_FILENAME", sizeof("SCRIPT_FILENAME"), (void **)&var)) {
+				if (IS_STRING != Z_TYPE_PP(var)) {
+					convert_to_string_ex(var);
+				}
+
+				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
+					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
+					Z_STRLEN_PP(var) -= len;
+				}
+			}
+		}
+
+		/* This is probably not needed — updating $_SERVER seems to update $_ENV as well. But I want to be safe. */
+		if (http_globals[TRACK_VARS_ENV]) {
+			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_ENV]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var)) {
+				if (IS_STRING != Z_TYPE_PP(var)) {
+					convert_to_string_ex(var);
+				}
+
+				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
+					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
+					Z_STRLEN_PP(var) -= len;
+				}
+			}
+
+			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_ENV]->value.ht, "SCRIPT_FILENAME", sizeof("SCRIPT_FILENAME"), (void **)&var)) {
+				if (IS_STRING != Z_TYPE_PP(var)) {
+					convert_to_string_ex(var);
+				}
+
+				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
+					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
+					Z_STRLEN_PP(var) -= len;
+				}
+			}
+		}
+	}
+
+	return SUCCESS;
+}
+#endif /* !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT */
+
 #ifdef PHP_GINIT
 
 /**
@@ -274,7 +388,7 @@ static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 	globals_constructor(chuid_globals);
 }
 
-#endif
+#endif /* PHP_GINIT */
 
 /**
  * @brief Module Information
@@ -328,7 +442,11 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	PHP_MINIT(chuid),
 	PHP_MSHUTDOWN(chuid),
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+	PHP_RINIT(chuid),
+#else
 	NULL,
+#endif
 	NULL,
 	PHP_MINFO(chuid),
 #if ZEND_MODULE_API_NO > 20010901

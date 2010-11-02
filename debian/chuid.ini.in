@@ -1,3 +1,4 @@
+[chuid]
 zend_extension = @EXTDIR@/chuid.so
 
 chuid.enabled = 0
@@ -7,3 +8,13 @@ chuid.cli_disable = 1
 chuid.default_uid = 65534
 chuid.default_gid = 65534
 chuid.global_chroot =
+chuid.enable_per_request_chroot = 0
+;chuid.enable_per_request_chroot = 1
+
+;[HOST=test.example.com]
+;chuid.chroot_to = /var/www/test.example.com
+
+;[PATH=/var/www]
+;chuid.chroot_to = /var/www
+
+[php]

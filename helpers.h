@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4
+ * @version 0.4.1
  * @brief Helper functions — definitions
  */
 
@@ -29,12 +29,22 @@ PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(TSRMLS_D);
 PHPCHUID_VISIBILITY_HIDDEN int do_chroot(const char* root TSRMLS_DC);
 
 /**
- * @brief Changes {R,E}UID/{R,E}GID to the owner of the DOCUMENT_ROOT
- * @return Whether operation succeeded
+ * @brief Sets RUID/EUID/SUID and RGID/EGID/SGID
+ * @param uid Real and Effective UID
+ * @param gid Real and Effective GID
+ * @return Whether calls to <code>my_setgids()</code>/<code>my_setuids()</code> were successful
  * @retval SUCCESS OK
  * @retval FAILURE Failure
  */
-PHPCHUID_VISIBILITY_HIDDEN int change_uids(TSRMLS_D);
+PHPCHUID_VISIBILITY_HIDDEN int set_guids(uid_t uid, gid_t gid TSRMLS_DC);
+
+/**
+ * @brief Gets <code>DOCUMENT_ROOT</code>'s owner UID and GID
+ * @param uid [out] UID to set
+ * @param gid [out] GID to set
+ * @note Both @c uid and @c gid must be non-null
+ */
+PHPCHUID_VISIBILITY_HIDDEN void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC);
 
 /**
  * @brief Deactivation function

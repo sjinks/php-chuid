@@ -33,7 +33,8 @@ static int chuid_zend_startup(zend_extension* extension)
 
 /**
  * @brief Request Activation Routine
- * @see change_uids()
+ * @see set_guids()
+ * @see get_docroot_guids()
  *
  * This is what the extension was written for :-) This function changes UIDs and GIDs (if INI settings permit).
  * Inability to change UIDs or GUIDs is always considered an error and request is terminated
@@ -42,14 +43,50 @@ static void chuid_zend_activate(void)
 {
 	TSRMLS_FETCH();
 
+#ifdef DEBUG
+	fprintf(stderr, "zend_activate\n");
+#endif
+
 	if (1 == CHUID_G(active)) {
+		uid_t uid;
+		gid_t gid;
+
+		/* We must get UID and GID before chrooting */
+		get_docroot_guids(&uid, &gid TSRMLS_CC);
+
 #if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot)) {
+			CHUID_G(chrooted) = 0;
+			/*
+			 * We have to call sapi_module.activate() explicitly because SAPI Activate is called before REQUEST_INIT and after
+			 * ZEND_ACTIVATE. SAPI Activate sets per-directory INI settings, and chroot()'ing in the RINIT phase is too late.
+			 */
+			sapi_module.activate(TSRMLS_C);
 			char* root = CHUID_G(req_chroot);
+#	ifdef DEBUG
+			fprintf(stderr, "Per-request root is \"%s\"\n", root);
+#	endif
 			if (root && *root && '/' == *root) {
-				int res = do_chroot(root TSRMLS_CC);
+				int res  = do_chroot(root TSRMLS_CC);
+				char* pt = SG(request_info).path_translated;
 				if (FAILURE == res) {
-					zend_bailout();
+					return;
+				}
+
+				CHUID_G(chrooted) = 1;
+				if (pt) {
+					size_t len = strlen(root);
+					if (root[len-1] == '/' || root[len-1] == '\\') {
+						--len;
+						CHUID_G(req_chroot)[len] = 0;
+					}
+
+					if (!strncmp(pt, root, len)) {
+						memmove(pt, pt+len, strlen(pt)-len+1);
+#	ifdef DEBUG
+						fprintf(stderr, "New PATH_TRANSLATED is \"%s\"\n", pt);
+#	endif
+					}
 				}
 			}
 		}
@@ -58,7 +95,11 @@ static void chuid_zend_activate(void)
 			CHUID_G(active) = 0;
 		}
 
-		change_uids(TSRMLS_C);
+		set_guids(uid, gid TSRMLS_C);
+
+#ifdef DEBUG
+		fprintf(stderr, "UID: %d, GID: %d\n", getuid(), getgid());
+#endif
 	}
 }
 

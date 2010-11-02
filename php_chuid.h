@@ -109,6 +109,8 @@
 
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
+PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;
+PHPCHUID_VISIBILITY_HIDDEN extern gid_t gid_nogroup;
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
 
 /**
@@ -177,6 +179,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool per_req_chroot;    /**< Whether per-request @c chroot() is enabled */
 	char* req_chroot;            /**< Per-request @c chroot */
 	int root_fd;                 /**< Root directory descriptor */
+	zend_bool chrooted;          /**< Whether we need to adjust @c SCRIPT_FILENAME and @c DOCUMENT_ROOT */
 #endif
 #endif
 	enum change_xid_mode_t mode; /**< Change UID/GID mode */

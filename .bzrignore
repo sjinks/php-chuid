@@ -29,3 +29,5 @@ missing
 mkinstalldirs
 run-tests.php
 macros.h
+.cproject
+.project
