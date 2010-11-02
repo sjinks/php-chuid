@@ -76,29 +76,31 @@ static PHP_INI_DISP(chuid_protected_displayer)
  * <TR><TH>@c chuid.global_chroot</TH><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
  * <TR><TH>@c chuid.enable_per_request_chroot</TH><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
  * <TR><TH>@c chuid.chroot_to</TH><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
+ * <TR><TH>@c chuid.run_sapi_deactivate</TH><TD>@c bool</TD><TD>Whether to run SAPI deactivate funcrion after calling SAPI activate to get per-directory settings</TD></TR>
  * <TR><TH>@c chuid.force_gid</TH><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
 PHP_INI_BEGIN()
 #if COMPILE_DL_CHUID
-	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "1",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,             zend_chuid_globals, chuid_globals)
 #else
-	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,        zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.enabled",                     "0",     PHP_INI_SYSTEM,             OnUpdateBool,   enabled,             zend_chuid_globals, chuid_globals)
 #endif
-	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM,             OnUpdateBool,   disable_setuid, zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM,             OnUpdateBool,   never_root,     zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM,             OnUpdateBool,   cli_disable,    zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM,             OnUpdateBool,   no_set_gid,     zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_uid,    zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_gid,    zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.disable_posix_setuid_family", "1",     PHP_INI_SYSTEM,             OnUpdateBool,   disable_setuid,      zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.never_root",                  "1",     PHP_INI_SYSTEM,             OnUpdateBool,   never_root,          zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.cli_disable",                 "1",     PHP_INI_SYSTEM,             OnUpdateBool,   cli_disable,         zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM,             OnUpdateBool,   no_set_gid,          zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_uid,         zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_gid,         zend_chuid_globals, chuid_globals)
 #if HAVE_CHROOT
-	STD_PHP_INI_ENTRY("chuid.global_chroot",                 "",      PHP_INI_SYSTEM,             OnUpdateString, global_chroot,  zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.global_chroot",                 "",      PHP_INI_SYSTEM,             OnUpdateString, global_chroot,       zend_chuid_globals, chuid_globals)
 #endif
 #if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
-	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot, zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,     zend_chuid_globals, chuid_globals, chuid_protected_displayer)
+	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot,      zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,          zend_chuid_globals, chuid_globals, chuid_protected_displayer)
+	STD_PHP_INI_BOOLEAN("chuid.run_sapi_deactivate",         "1",     CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateBool,   run_sapi_deactivate, zend_chuid_globals, chuid_globals)
 #endif
-	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM,             OnUpdateLong,   forced_gid,     zend_chuid_globals, chuid_globals)
+	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM,             OnUpdateLong,   forced_gid,          zend_chuid_globals, chuid_globals)
 PHP_INI_END()
 
 #undef CHUID_INI_SYSTEM_OR_PERDIR

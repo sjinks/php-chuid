@@ -61,7 +61,14 @@ static void chuid_zend_activate(void)
 			 * We have to call sapi_module.activate() explicitly because SAPI Activate is called before REQUEST_INIT and after
 			 * ZEND_ACTIVATE. SAPI Activate sets per-directory INI settings, and chroot()'ing in the RINIT phase is too late.
 			 */
-			sapi_module.activate(TSRMLS_C);
+			if (sapi_module.activate) {
+				sapi_module.activate(TSRMLS_C);
+			}
+
+			if (CHUID_G(run_sapi_deactivate) && sapi_module.deactivate) {
+				sapi_module.deactivate();
+			}
+
 			char* root = CHUID_G(req_chroot);
 #	ifdef DEBUG
 			fprintf(stderr, "Per-request root is \"%s\"\n", root);
