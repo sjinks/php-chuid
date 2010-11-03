@@ -55,7 +55,7 @@ static void chuid_zend_activate(void)
 		get_docroot_guids(&uid, &gid TSRMLS_CC);
 
 #if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
-		if (CHUID_G(per_req_chroot)) {
+		if (CHUID_G(per_req_chroot) && !sapi_is_cli) {
 			CHUID_G(chrooted) = 0;
 			/*
 			 * We have to call sapi_module.activate() explicitly because SAPI Activate is called before REQUEST_INIT and after

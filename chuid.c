@@ -172,14 +172,23 @@ static PHP_MINIT_FUNCTION(chuid)
 		global_chroot = NULL;
 	}
 
-#if !defined(ZTS) && HAVE_FCHDIR
-	if (need_chroot) {
+#	if !defined(ZTS) && HAVE_FCHDIR
+	if (need_chroot || sapi_is_cli) {
 		CHUID_G(per_req_chroot) = 0;
 	}
 
 	per_req_chroot = CHUID_G(per_req_chroot);
 	if (per_req_chroot) {
-		root_fd = open("/", O_RDONLY);
+		root_fd = open(
+			"/",
+			O_RDONLY
+#		ifdef O_CLOEXEC
+			|| O_CLOEXEC
+#		endif
+#		ifdef O_DIRECTORY
+			|| O_DIRECTORY
+#		endif
+		);
 		if (root_fd < 0) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "open(\"/\", O_RDONLY) failed: %s", strerror(errno));
 			return FAILURE;
@@ -188,16 +197,16 @@ static PHP_MINIT_FUNCTION(chuid)
 		CHUID_G(root_fd) = root_fd;
 		need_chroot      = 1;
 	}
-#endif
+#	endif /* !defined(ZTS) && HAVE_FCHDIR */
 
 	if ((int)CAP_CLEAR == can_chroot && need_chroot) {
 		PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires CAP_SYS_ROOT capability (or root privileges) for chuid.global_chroot/chuid.per_request_chroot to take effect");
 		return FAILURE;
 	}
 
-#ifdef DEBUG
+#	ifdef DEBUG
 	fprintf(stderr, "Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
-#endif
+#	endif
 
 	if (global_chroot) {
 		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
