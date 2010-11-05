@@ -287,6 +287,12 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
 	}
 
+#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+	if (CHUID_G(root_fd) > -1) {
+		close(CHUID_G(root_fd));
+	}
+#endif
+
 	UNREGISTER_INI_ENTRIES();
 
 	return SUCCESS;

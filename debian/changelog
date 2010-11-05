@@ -1,3 +1,9 @@
+php-chuid (0.4.2-ppa1) maverick; urgency=low
+
+  * LP #671573
+
+ -- Vladimir Kolesnikov <vladimir@extrememember.com>  Tue, 05 Nov 2010 22:24:22 +0200
+
 php-chuid (0.4.1-ppa1) maverick; urgency=low
 
   * LP #668608
