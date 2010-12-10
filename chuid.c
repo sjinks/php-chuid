@@ -132,6 +132,12 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif
 #endif /* HAVE_CHROOT */
 
+	REGISTER_INI_ENTRIES();
+
+	if (!CHUID_G(enabled)) {
+		return SUCCESS;
+	}
+
 #if !COMPILE_DL_CHUID
 	zend_extension extension = XXX_EXTENSION_ENTRY;
 	extension.handle = NULL;
@@ -149,11 +155,6 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif /* ZTS */
 #endif /* PHP_GINIT */
 
-	REGISTER_INI_ENTRIES();
-
-	if (!CHUID_G(enabled)) {
-		return SUCCESS;
-	}
 
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);
