@@ -3,7 +3,7 @@ Section: php
 Priority: optional
 Maintainer: Vladimir Kolesnikov <vladimir@extrememember.com>
 Build-Depends: debhelper (>= 7.0.50~), php5-dev, libcap-dev
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Vcs-Bzr: lp:php-chuid
 
 Package: php5-chuid
