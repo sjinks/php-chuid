@@ -10,7 +10,7 @@ Package: php5-chuid
 Architecture: any
 Depends: ${shlibs:Depends}, ${php:Depends}, ${misc:Depends}
 Description: Runs PHP as the owner of DocumentRoot
- php-chuid allows to run PHP CLI/CGI/FastCGI as the owner of the
+ php-chuid allows one to run PHP CLI/CGI/FastCGI as the owner of the
  DocumentRoot changing UID/GID upon request start and reverting
  to the original UID/GID when the request finishes.
  .
