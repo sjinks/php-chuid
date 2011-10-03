@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4.1
+ * @version 0.4.2
  * @brief PHP CHUID Module
  */
 
@@ -95,7 +95,7 @@ PHP_INI_BEGIN()
 #if HAVE_CHROOT
 	STD_PHP_INI_ENTRY("chuid.global_chroot",                 "",      PHP_INI_SYSTEM,             OnUpdateString, global_chroot,       zend_chuid_globals, chuid_globals)
 #endif
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot,      zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,          zend_chuid_globals, chuid_globals, chuid_protected_displayer)
 	STD_PHP_INI_BOOLEAN("chuid.run_sapi_deactivate",         "1",     CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateBool,   run_sapi_deactivate, zend_chuid_globals, chuid_globals)
@@ -126,7 +126,7 @@ static PHP_MINIT_FUNCTION(chuid)
 #ifdef HAVE_CHROOT
 	zend_bool need_chroot;
 	char* global_chroot;
-#if !defined(ZTS) && HAVE_FCHDIR
+#if HAVE_FCHDIR
 	int root_fd;
 	zend_bool per_req_chroot;
 #endif
@@ -148,13 +148,8 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif
 
 #ifndef PHP_GINIT
-#ifdef ZTS
-	ts_allocate_id(&chuid_globals_id, sizeof(zend_chuid_globals), (ts_allocate_ctor)chuid_globals_ctor, NULL);
-#else
 	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
-#endif /* ZTS */
 #endif /* PHP_GINIT */
-
 
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);
@@ -173,7 +168,7 @@ static PHP_MINIT_FUNCTION(chuid)
 		global_chroot = NULL;
 	}
 
-#	if !defined(ZTS) && HAVE_FCHDIR
+#	if HAVE_FCHDIR
 	if (need_chroot || sapi_is_cli) {
 		CHUID_G(per_req_chroot) = 0;
 	}
@@ -198,7 +193,7 @@ static PHP_MINIT_FUNCTION(chuid)
 		CHUID_G(root_fd) = root_fd;
 		need_chroot      = 1;
 	}
-#	endif /* !defined(ZTS) && HAVE_FCHDIR */
+#	endif /* HAVE_FCHDIR */
 
 	if ((int)CAP_CLEAR == can_chroot && need_chroot) {
 		PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires CAP_SYS_ROOT capability (or root privileges) for chuid.global_chroot/chuid.per_request_chroot to take effect");
@@ -236,25 +231,21 @@ static PHP_MINIT_FUNCTION(chuid)
 			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
 		}
 
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 		if (need_chroot) {
 			caps[num_caps] = CAP_SYS_CHROOT;
 			++num_caps;
 		}
 #endif
 
-#if defined(WITH_CAP_LIBRARY) && !defined(ZTS)
+#if defined(WITH_CAP_LIBRARY)
 		if (forced_gid < 1 && 0 == no_gid) {
 			caps[num_caps] = CAP_SETGID;
 			++num_caps;
 		}
-#endif
 
-#if defined(WITH_CAP_LIBRARY)
-#	if !defined(ZTS)
 		caps[num_caps] = CAP_SETUID;
 		++num_caps;
-#	endif
 
 		caps[num_caps] = CAP_DAC_READ_SEARCH;
 		++num_caps;
@@ -265,9 +256,7 @@ static PHP_MINIT_FUNCTION(chuid)
 			return FAILURE;
 		}
 
-#ifndef ZTS
 		CHUID_G(active) = 1;
-#endif
 	}
 
 	return SUCCESS;
@@ -288,7 +277,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
 	}
 
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 	if (CHUID_G(root_fd) > -1) {
 		close(CHUID_G(root_fd));
 	}
@@ -299,7 +288,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 	return SUCCESS;
 }
 
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 /**
  * If @c chroot() was performed, adjusts <code>$_SERVER['DOCUMENT_ROOT']</code>, <code>$_SERVER['SCRIPT_FILENAME']</code>,
  * <code>$_ENV['DOCUMENT_ROOT']</code> and <code>$_ENV['SCRIPT_FILENAME']</code> by stripping <code>CHUID_G(req_chroot)</code>
@@ -378,7 +367,7 @@ static PHP_RINIT_FUNCTION(chuid)
 
 	return SUCCESS;
 }
-#endif /* !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT */
+#endif /* HAVE_FCHDIR && HAVE_CHROOT */
 
 #ifdef PHP_GINIT
 
@@ -460,7 +449,7 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	PHP_MINIT(chuid),
 	PHP_MSHUTDOWN(chuid),
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 	PHP_RINIT(chuid),
 #else
 	NULL,

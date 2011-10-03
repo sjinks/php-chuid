@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4.1
+ * @version 0.4.2
  * @brief Helper functions — implementation
  */
 
@@ -225,7 +225,7 @@ void deactivate(TSRMLS_D)
 			}
 		}
 
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot)) {
 			int res;
 
@@ -265,7 +265,7 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 
 #if HAVE_CHROOT
 	chuid_globals->global_chroot = NULL;
-#if !defined(ZTS) && HAVE_FCHDIR
+#if HAVE_FCHDIR
 	chuid_globals->per_req_chroot = 0;
 	chuid_globals->req_chroot     = NULL;
 	chuid_globals->root_fd        = -1;

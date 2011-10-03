@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4.1
+ * @version 0.4.2
  * @brief Zend Extensions related stuff — implementation
  */
 
@@ -54,7 +54,7 @@ static void chuid_zend_activate(void)
 		/* We must get UID and GID before chrooting */
 		get_docroot_guids(&uid, &gid TSRMLS_CC);
 
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot) && !sapi_is_cli) {
 			CHUID_G(chrooted) = 0;
 			/*

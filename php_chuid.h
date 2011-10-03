@@ -7,7 +7,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@extrememember.com>
- * @version 0.4.1
+ * @version 0.4.2
  * @brief Common include file
  */
 
@@ -29,7 +29,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "0.4.1"
+#define PHP_CHUID_EXTVER    "0.4.2"
 
 /**
  * @headerfile php_chuid.h
@@ -46,7 +46,7 @@
 /**
  * @headerfile php_chuid.h
  */
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2010"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2011"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
@@ -65,18 +65,17 @@
 #	include <sys/capability.h>
 #endif
 
+#ifdef ZTS
+#	error "ZTS is not supported"
+#endif
+
 /**
  * @def CHUID_G(v)
  * @brief Provides thread safe acccess to the global @c v (stored in @c chuid_globals)
  * @see @c chuid_globals
  * @headerfile php_chuid.h
  */
-#ifdef ZTS
-#	include "TSRM.h"
-#	define CHUID_G(v) TSRMG(chuid_globals_id, zend_chuid_globals*, v)
-#else
-#	define CHUID_G(v) (chuid_globals.v)
-#endif
+#define CHUID_G(v) (chuid_globals.v)
 
 /**
  * @def PHPCHUID_VISIBILITY_HIDDEN
@@ -175,7 +174,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool no_set_gid;          /**< Do not set GID */
 #ifdef HAVE_CHROOT
 	char* global_chroot;           /**< Global chroot() directory */
-#if !defined(ZTS) && HAVE_FCHDIR && HAVE_CHROOT
+#if HAVE_FCHDIR && HAVE_CHROOT
 	zend_bool per_req_chroot;      /**< Whether per-request @c chroot() is enabled */
 	char* req_chroot;              /**< Per-request @c chroot */
 	int root_fd;                   /**< Root directory descriptor */
@@ -183,7 +182,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool run_sapi_deactivate; /**< Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings */
 #endif
 #endif
-	enum change_xid_mode_t mode; /**< Change UID/GID mode */
+	enum change_xid_mode_t mode;   /**< Change UID/GID mode */
 ZEND_END_MODULE_GLOBALS(chuid)
 
 PHPCHUID_VISIBILITY_HIDDEN extern ZEND_DECLARE_MODULE_GLOBALS(chuid);
