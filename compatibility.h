@@ -1,6 +1,6 @@
 /**
  * @file
- * @author Vladimir Kolesnikov <vladimir@extrememember.com>
+ * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
  * @version 0.4
  * @brief Compatibilty related stuff — definitions
  */
