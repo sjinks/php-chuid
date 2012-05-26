@@ -5,10 +5,6 @@
  * @brief Helper functions — definitions
  */
 
-#ifdef DOXYGEN
-#	undef PHPCHUID_HELPERS_H_
-#endif
-
 #ifndef PHPCHUID_HELPERS_H_
 #define PHPCHUID_HELPERS_H_
 

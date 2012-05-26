@@ -5,10 +5,6 @@
  * @brief Zend Extensions related stuff — definitions
  */
 
-#ifdef DOXYGEN
-#	undef PHPCHUID_EXTENSION_H_
-#endif
-
 #ifndef PHPCHUID_EXTENSION_H_
 #define PHPCHUID_EXTENSION_H_
 

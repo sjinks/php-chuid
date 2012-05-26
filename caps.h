@@ -5,10 +5,6 @@
  * @brief Interface to libcap — definitions
  */
 
-#ifdef DOXYGEN
-#	undef PHPCHUID_CAPS_H_
-#endif
-
 #ifndef PHPCHUID_CAPS_H_
 #define PHPCHUID_CAPS_H_
 

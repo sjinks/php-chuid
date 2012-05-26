@@ -14,6 +14,7 @@
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"
+#include "stealth.h"
 
 #ifndef PHP_GINIT
 /**
@@ -130,6 +131,14 @@ static PHP_MINIT_FUNCTION(chuid)
 	zend_bool per_req_chroot;
 #endif
 #endif /* HAVE_CHROOT */
+
+#ifdef DEBUG
+	fprintf(stderr, "PHP_MINIT(chuid)\n");
+#endif
+
+	stealth_module    = &chuid_module_entry;
+	stealth_extension = &XXX_EXTENSION_ENTRY;
+	stealth_module_init();
 
 	REGISTER_INI_ENTRIES();
 
@@ -271,6 +280,10 @@ static PHP_MINIT_FUNCTION(chuid)
  */
 static PHP_MSHUTDOWN_FUNCTION(chuid)
 {
+#ifdef DEBUG
+	fprintf(stderr, "PHP_MSHUTDOWN(chuid)\n");
+#endif
+
 	if (0 != CHUID_G(enabled) && 0 != CHUID_G(disable_setuid)) {
 		zend_hash_clean(&blacklisted_functions);
 		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
@@ -303,6 +316,10 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
  */
 static PHP_RINIT_FUNCTION(chuid)
 {
+#ifdef DEBUG
+	fprintf(stderr, "PHP_RINIT(chuid)\n");
+#endif
+
 	if (CHUID_G(chrooted)) {
 		zval** var;
 		zval** http_globals = PG(http_globals);
@@ -378,6 +395,10 @@ static PHP_RINIT_FUNCTION(chuid)
  */
 static PHP_GINIT_FUNCTION(chuid)
 {
+#ifdef DEBUG
+	fprintf(stderr, "PHP_GINIT(chuid)\n");
+#endif
+
 	globals_constructor(chuid_globals);
 }
 
@@ -391,6 +412,10 @@ static PHP_GINIT_FUNCTION(chuid)
  */
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 {
+#ifdef DEBUG
+	fprintf(stderr, "GLOBALS_CTOR(chuid)\n");
+#endif
+
 	globals_constructor(chuid_globals);
 }
 
@@ -425,6 +450,10 @@ static PHP_MINFO_FUNCTION(chuid)
 static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 {
 	TSRMLS_FETCH();
+
+#ifdef DEBUG
+	fprintf(stderr, "POST_ZEND_DEACTIVATE(chuid)\n");
+#endif
 
 	deactivate(TSRMLS_C);
 	return SUCCESS;
@@ -472,3 +501,5 @@ zend_module_entry chuid_module_entry = {
 	STANDARD_MODULE_PROPERTIES
 #endif
 };
+
+ZEND_GET_MODULE(chuid);

@@ -5,10 +5,6 @@
  * @brief Compatibilty related stuff — definitions
  */
 
-#ifdef DOXYGEN
-#	undef PHPCHUID_COMPATIBILITY_H_
-#endif
-
 #ifndef PHPCHUID_COMPATIBILITY_H_
 #define PHPCHUID_COMPATIBILITY_H_
 
