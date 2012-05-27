@@ -92,6 +92,15 @@
 #	define PHPCHUID_ERROR(severity, format, ...) zend_error((severity), (format), __VA_ARGS__)
 #endif
 
+#ifdef DEBUG
+#	define PHPCHUID_DEBUG(format, ...) \
+		do { \
+			fprintf(stderr, (format), __VA_ARGS__); \
+		} while (0)
+#else
+#	define PHPCHUID_DEBUG(format, ...)
+#endif
+
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;

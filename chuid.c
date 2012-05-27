@@ -132,9 +132,7 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif
 #endif /* HAVE_CHROOT */
 
-#ifdef DEBUG
-	fprintf(stderr, "PHP_MINIT(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
 
 	stealth_module    = &chuid_module_entry;
 	stealth_extension = &XXX_EXTENSION_ENTRY;
@@ -208,9 +206,7 @@ static PHP_MINIT_FUNCTION(chuid)
 		return FAILURE;
 	}
 
-#	ifdef DEBUG
-	fprintf(stderr, "Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
-#	endif
+	PHPCHUID_DEBUG("Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
 
 	if (global_chroot) {
 		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
@@ -280,9 +276,7 @@ static PHP_MINIT_FUNCTION(chuid)
  */
 static PHP_MSHUTDOWN_FUNCTION(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "PHP_MSHUTDOWN(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "PHP_MSHUTDOWN(chuid)");
 
 	if (0 != CHUID_G(enabled) && 0 != CHUID_G(disable_setuid)) {
 		zend_hash_clean(&blacklisted_functions);
@@ -316,9 +310,7 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
  */
 static PHP_RINIT_FUNCTION(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "PHP_RINIT(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "PHP_RINIT(chuid)");
 
 	if (CHUID_G(chrooted)) {
 		zval** var;
@@ -395,9 +387,7 @@ static PHP_RINIT_FUNCTION(chuid)
  */
 static PHP_GINIT_FUNCTION(chuid)
 {
-#ifdef DEBUG
-	fprintf(stderr, "PHP_GINIT(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "PHP_GINIT(chuid)");
 
 	globals_constructor(chuid_globals);
 }
@@ -412,9 +402,7 @@ static PHP_GINIT_FUNCTION(chuid)
  */
 static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
 {
-#ifdef DEBUG
-	fprintf(stderr, "GLOBALS_CTOR(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "GLOBALS_CTOR(chuid)");
 
 	globals_constructor(chuid_globals);
 }
@@ -451,9 +439,7 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 {
 	TSRMLS_FETCH();
 
-#ifdef DEBUG
-	fprintf(stderr, "POST_ZEND_DEACTIVATE(chuid)\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "POST_ZEND_DEACTIVATE(chuid)");
 
 	deactivate(TSRMLS_C);
 	return SUCCESS;

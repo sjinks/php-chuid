@@ -2,6 +2,7 @@ php-chuid (0.4.2-ppa1) oneiric; urgency=low
 
   * LP #671573
   * Disabled ZTS
+  * LP #671174
 
  -- Vladimir Kolesnikov <vladimir@extrememember.com>  Mon, 03 Oct 2011 22:18:22 +0200
 

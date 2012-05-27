@@ -201,9 +201,7 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
  */
 void deactivate(TSRMLS_D)
 {
-#ifdef DEBUG
-	fprintf(stderr, "deactivate\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "deactivate");
 
 	if (1 == CHUID_G(active)) {
 		int res;

@@ -45,9 +45,7 @@ static void chuid_zend_activate(void)
 {
 	TSRMLS_FETCH();
 
-#ifdef DEBUG
-	fprintf(stderr, "zend_activate\n");
-#endif
+	PHPCHUID_DEBUG("%s\n", "zend_activate");
 
 	if (1 == CHUID_G(active)) {
 		uid_t uid;
@@ -72,9 +70,8 @@ static void chuid_zend_activate(void)
 			}
 
 			char* root = CHUID_G(req_chroot);
-#	ifdef DEBUG
-			fprintf(stderr, "Per-request root is \"%s\"\n", root);
-#	endif
+			PHPCHUID_DEBUG("Per-request root is \"%s\"\n", root);
+
 			if (root && *root && '/' == *root) {
 				int res  = do_chroot(root TSRMLS_CC);
 				char* pt = SG(request_info).path_translated;
@@ -92,9 +89,7 @@ static void chuid_zend_activate(void)
 
 					if (!strncmp(pt, root, len)) {
 						memmove(pt, pt+len, strlen(pt)-len+1);
-#	ifdef DEBUG
-						fprintf(stderr, "New PATH_TRANSLATED is \"%s\"\n", pt);
-#	endif
+						PHPCHUID_DEBUG("New PATH_TRANSLATED is \"%s\"\n", pt);
 					}
 				}
 			}
@@ -106,9 +101,7 @@ static void chuid_zend_activate(void)
 
 		set_guids(uid, gid TSRMLS_C);
 
-#ifdef DEBUG
-		fprintf(stderr, "UID: %d, GID: %d\n", getuid(), getgid());
-#endif
+		PHPCHUID_DEBUG("UID: %d, GID: %d\n", getuid(), getgid());
 	}
 }
 
