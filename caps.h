@@ -16,6 +16,9 @@ typedef enum {
 	CAP_CLEAR = 0, //!< CAP_CLEAR
 	CAP_SET = 1    //!< CAP_SET
 } cap_flag_value_t;
+
+typedef int cap_value_t;
+
 #endif
 
 /**

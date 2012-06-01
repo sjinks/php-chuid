@@ -10,8 +10,10 @@
  */
 static int flag = 0;
 
-static startup_func_t orig_module_startup   = NULL; /**< Original Zend Startup function of the last loaded Zend Extension */
-static shutdown_func_t orig_module_shutdown = NULL; /**< Original Zend Shutdown function of the last loaded Zend Extension */
+static startup_func_t orig_module_startup       = NULL; /**< Original Zend Startup function of the last loaded Zend Extension */
+static shutdown_func_t orig_module_shutdown     = NULL; /**< Original Zend Shutdown function of the last loaded Zend Extension */
+static activate_func_t orig_module_activate     = NULL;
+static deactivate_func_t orig_module_deactivate = NULL;
 
 static zend_extension* ze = NULL; /**< Last loaded Zend Extension */
 
@@ -52,6 +54,32 @@ static void stealthmode_shutdown(zend_extension* extension)
 	}
 
 	stealth_ze_shutdown(extension);
+}
+
+static void stealthmode_activate(void)
+{
+	PHPCHUID_DEBUG("%s\n", "chuid: stealthmode_activate");
+
+	if (orig_module_activate) {
+		orig_module_activate();
+	}
+
+	if (stealth_extension && stealth_extension->activate) {
+		stealth_extension->activate();
+	}
+}
+
+static void stealthmode_deactivate(void)
+{
+	PHPCHUID_DEBUG("%s\n", "chuid: stealthmode_deactivate");
+
+	if (orig_module_deactivate) {
+		orig_module_deactivate();
+	}
+
+	if (stealth_extension && stealth_extension->deactivate) {
+		stealth_extension->deactivate();
+	}
 }
 
 /**
@@ -112,8 +140,10 @@ void stealth_ze_shutdown(zend_extension* extension)
 	PHPCHUID_DEBUG("chuid: stealth_ze_shutdown: extension name is %s\n", extension ? extension->name : "(N/A)");
 
 	if (ze) {
-		ze->startup  = orig_module_startup;
-		ze->shutdown = orig_module_shutdown;
+		ze->startup    = orig_module_startup;
+		ze->shutdown   = orig_module_shutdown;
+		ze->activate   = orig_module_activate;
+		ze->deactivate = orig_module_deactivate;
 	}
 }
 
@@ -180,6 +210,8 @@ static int invisible_extension_startup(zend_extension* extension)
 
 	ze->startup  = stealthmode_startup;
 	ze->shutdown = stealthmode_shutdown;
+	ze->activate = stealthmode_activate;
+	ze->deactivate = stealthmode_deactivate;
 
 	res = orig_module_startup ? orig_module_startup(extension) : SUCCESS;
 	stealth_ze_startup(NULL);
@@ -239,6 +271,8 @@ void stealth_message_handler(int message, void* arg)
 
 		orig_module_startup  = e->startup;
 		orig_module_shutdown = e->shutdown;
+		orig_module_activate = e->activate;
+		orig_module_deactivate = e->deactivate;
 
 		e->startup = invisible_extension_startup2;
 	}
@@ -272,6 +306,8 @@ void stealth_module_init(void)
 
 			orig_module_startup  = ze->startup;
 			orig_module_shutdown = ze->shutdown;
+			orig_module_activate = ze->activate;
+			orig_module_deactivate = ze->deactivate;
 
 			ze->startup = invisible_extension_startup;
 
