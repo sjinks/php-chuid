@@ -1,0 +1,17 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+install:
+  - apt-get update
+  - apt-get install debhelper php5-dev libcap-dev
+
+script:
+  - phpize
+  - ./configure
+  - make
+
+notifications:
+  email: false
