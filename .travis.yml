@@ -6,7 +6,7 @@ compiler:
 
 install:
   - sudo apt-get update
-  - sudo apt-get install debhelper php5-dev libcap-dev
+  - sudo apt-get install php5-dev libcap-dev
 
 script:
   - phpize
