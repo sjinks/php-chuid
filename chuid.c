@@ -14,7 +14,6 @@
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"
-#include "stealth.h"
 
 #ifndef PHP_GINIT
 /**
@@ -133,10 +132,6 @@ static PHP_MINIT_FUNCTION(chuid)
 #endif /* HAVE_CHROOT */
 
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
-
-	stealth_module    = &chuid_module_entry;
-	stealth_extension = &XXX_EXTENSION_ENTRY;
-	stealth_module_init();
 
 	REGISTER_INI_ENTRIES();
 

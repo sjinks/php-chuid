@@ -7,7 +7,6 @@
 
 #include "extension.h"
 #include "helpers.h"
-#include "stealth.h"
 
 zend_bool sapi_is_cli = 0; /**< Whether SAPI is CLI */
 zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
@@ -26,11 +25,10 @@ static int chuid_zend_startup(zend_extension* extension)
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
-	stealth_module    = &chuid_module_entry;
-	stealth_extension = &XXX_EXTENSION_ENTRY;
+	return zend_startup_module(&chuid_module_entry);
 #endif
 
-	return stealth_ze_startup(extension);
+	return SUCCESS;
 }
 
 /**
@@ -124,7 +122,7 @@ zend_extension XXX_EXTENSION_ENTRY = {
 	PHP_CHUID_COPYRIGHT,
 
 	chuid_zend_startup,    /* Startup */
-	stealth_ze_shutdown,   /* Shutdown */
+	NULL,                  /* Shutdown */
 	chuid_zend_activate,   /* Activate */
 #ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 	NULL,                  /* Deactivate */
@@ -132,7 +130,7 @@ zend_extension XXX_EXTENSION_ENTRY = {
 	chuid_zend_deactivate,
 #endif
 
-	stealth_message_handler, /* Message handler */
+	NULL, /* Message handler */
 	NULL, /* Op Array Handler */
 
 	NULL, /* Statement handler */

@@ -37,7 +37,7 @@ if test $PHP_CHUID != "no"; then
 		fi
 	fi
 
-	PHP_NEW_EXTENSION(chuid, [chuid.c compatibility.c caps.c helpers.c extension.c stealth.c], $ext_shared, [cgi], [-Wall -std=gnu99 -D_GNU_SOURCE])
+	PHP_NEW_EXTENSION(chuid, [chuid.c compatibility.c caps.c helpers.c extension.c], $ext_shared, [cgi], [-Wall -std=gnu99 -D_GNU_SOURCE])
 	PHP_SUBST(CHUID_SHARED_LIBADD)
 	PHP_ADD_MAKEFILE_FRAGMENT
 fi
