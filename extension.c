@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4.2
+ * @version 0.5.0
  * @brief Zend Extensions related stuff — implementation
  */
 
@@ -21,6 +21,8 @@ zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
  */
 static int chuid_zend_startup(zend_extension* extension)
 {
+	PHPCHUID_DEBUG("%s\n", "zend_startup");
+
 #if COMPILE_DL_CHUID
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
 	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
@@ -107,6 +109,8 @@ static void chuid_zend_activate(void)
 
 static void chuid_zend_deactivate(void)
 {
+	PHPCHUID_DEBUG("%s\n", "zend_deactivate");
+
 	deactivate();
 }
 #endif
