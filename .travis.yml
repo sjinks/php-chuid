@@ -10,8 +10,5 @@ install:
 
 script:
   - phpize
-  - ./configure
+  - ./configure --with-cap
   - make
-
-notifications:
-  email: false
