@@ -31,3 +31,10 @@ run-tests.php
 macros.h
 .cproject
 .project
+/debian/chuid.ini
+/debian/files
+/debian/php5-chuid-dbg.*
+/debian/php5-chuid-dbg/
+/debian/php5-chuid.*.log
+/debian/php5-chuid.substvars
+/debian/php5-chuid/

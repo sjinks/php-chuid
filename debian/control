@@ -2,9 +2,10 @@ Source: php-chuid
 Section: php
 Priority: optional
 Maintainer: Vladimir Kolesnikov <vladimir@free-sevastopol.com>
-Build-Depends: debhelper (>= 7.0.50~), php5-dev, libcap-dev
-Standards-Version: 3.9.3
-Vcs-Bzr: lp:php-chuid
+Build-Depends: debhelper (>= 9), php5-dev, libcap-dev
+Standards-Version: 3.9.4
+Vcs-Git: git://github.com/sjinks/php-chuid.git
+Vcs-Browser: https://github.com/sjinks/php-chuid
 
 Package: php5-chuid
 Architecture: any
