@@ -134,12 +134,24 @@ static PHP_MINIT_FUNCTION(chuid)
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
 
 #ifndef PHP_GINIT
+#ifdef ZTS
+	ts_allocate_id(&chuid_globals_id, sizeof(zend_chuid_globals), (ts_allocate_ctor)chuid_globals_ctor, NULL);
+#else
 	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
+#endif
 #endif
 
 	REGISTER_INI_ENTRIES();
 
+#ifdef ZTS
+	if (!sapi_is_cli && !sapi_is_cgi) {
+		PHPCHUID_ERROR(E_WARNING, "%s\n", "Deactivating chuid because PHP SAPI is neither cli nor cgi");
+		return SUCCESS;
+	}
+#endif
+
 	if (!CHUID_G(enabled)) {
+		PHPCHUID_DEBUG("%s\n", "Disabling chuid because chuid.enabled=0");
 		return SUCCESS;
 	}
 
@@ -156,7 +168,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	disable_posix_setuids(TSRMLS_C);
 
 	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid)) {
-		zend_error(E_CORE_ERROR, "check_capabilities() failed");
+		PHPCHUID_ERROR(E_CORE_ERROR, "%s\n", "check_capabilities() failed");
 		return FAILURE;
 	}
 

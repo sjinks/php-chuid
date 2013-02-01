@@ -54,17 +54,18 @@
 #	include <sys/capability.h>
 #endif
 
-#ifdef ZTS
-#	error "ZTS is not supported"
-#endif
-
 /**
  * @def CHUID_G(v)
  * @brief Provides thread safe acccess to the global @c v (stored in @c chuid_globals)
  * @see @c chuid_globals
  * @headerfile php_chuid.h
  */
-#define CHUID_G(v) (chuid_globals.v)
+#ifdef ZTS
+#	include "TSRM.h"
+#	define CHUID_G(v) TSRMG(chuid_globals_id, zend_chuid_globals*, v)
+#else
+#	define CHUID_G(v) (chuid_globals.v)
+#endif
 
 /**
  * @def PHPCHUID_VISIBILITY_HIDDEN
