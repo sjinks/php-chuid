@@ -1,6 +1,6 @@
 /**
  * @file caps.c
- * @version 0.4.2
+ * @version 0.5.0
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
  * @brief Interface to libcap — implementation
  * @see http://www.kernel.org/doc/man-pages/online/pages/man7/capabilities.7.html

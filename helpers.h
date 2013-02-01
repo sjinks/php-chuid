@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4.1
+ * @version 0.5.0
  * @brief Helper functions — definitions
  */
 

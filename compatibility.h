@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4
+ * @version 0.5.0
  * @brief Compatibilty related stuff — definitions
  */
 

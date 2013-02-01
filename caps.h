@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.4
+ * @version 0.5.0
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
  * @brief Interface to libcap — definitions
  */

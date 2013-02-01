@@ -1,7 +1,7 @@
 /**
  * @file php_chuid.h
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4.2
+ * @version 0.5.0
  * @brief Common include file
  */
 
