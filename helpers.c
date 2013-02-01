@@ -42,8 +42,8 @@ gid_t gid_nogroup = 65534;
  */
 static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC)
 {
-	char* lcname      = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len = strlen(lcname);
+	const char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
+	size_t lcname_len  = strlen(lcname);
 
 #ifdef ZEND_ENGINE_2
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
