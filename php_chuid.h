@@ -18,7 +18,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "0.4.2"
+#define PHP_CHUID_EXTVER    "0.5.0"
 
 /**
  * @headerfile php_chuid.h
@@ -30,12 +30,12 @@
  * @headerfile php_chuid.h
  * @brief Extension home page
  */
-#define PHP_CHUID_URL       "https://launchpad.net/php-chuid"
+#define PHP_CHUID_URL       "https://github.com/sjinks/php-chuid"
 
 /**
  * @headerfile php_chuid.h
  */
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2012"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2013"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
@@ -101,6 +101,8 @@
 #	define PHPCHUID_DEBUG(format, ...)
 #endif
 
+PHPCHUID_VISIBILITY_HIDDEN extern int sapi_is_cli;
+PHPCHUID_VISIBILITY_HIDDEN extern int sapi_is_cgi;
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;

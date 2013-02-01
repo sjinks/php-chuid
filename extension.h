@@ -1,8 +1,8 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4
- * @brief Zend Extensions related stuff — definitions
+ * @version 0.5.0
+ * @brief Zend Extension related stuff — definitions
  */
 
 #ifndef PHPCHUID_EXTENSION_H_
@@ -10,7 +10,6 @@
 
 #include "php_chuid.h"
 
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool sapi_is_cli;
-PHPCHUID_VISIBILITY_HIDDEN extern zend_bool sapi_is_cgi;
+PHPCHUID_VISIBILITY_HIDDEN extern int zext_loaded;
 
 #endif /* PHPCHUID_EXTENSION_H_ */

@@ -1,15 +1,17 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4.2
+ * @version 0.5.0
  * @brief Helper functions — implementation
  */
 
 #include <assert.h>
-
 #include "helpers.h"
 #include "caps.h"
 #include "compatibility.h"
+
+int sapi_is_cli = -1; /**< Whether SAPI is CLI */
+int sapi_is_cgi = -1; /**< Whether SAPI is CGI */
 
 /**
  * @brief Hash table with the names of the blacklisted functions
@@ -246,6 +248,12 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 {
 	struct passwd* pwd;
 
+	assert(-1 == sapi_is_cli);
+	assert(-1 == sapi_is_cgi);
+
+	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
+
 	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
 	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
 	chuid_globals->active = 0;
@@ -262,7 +270,7 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 
 
 #if HAVE_CHROOT
-	chuid_globals->global_chroot = NULL;
+	chuid_globals->global_chroot  = NULL;
 #if HAVE_FCHDIR
 	chuid_globals->per_req_chroot = 0;
 	chuid_globals->req_chroot     = NULL;

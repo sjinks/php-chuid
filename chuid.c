@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
- * @version 0.4.2
+ * @version 0.5.0
  * @brief PHP CHUID Module
  */
 
@@ -133,24 +133,22 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
 
+#ifndef PHP_GINIT
+	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
+#endif
+
 	REGISTER_INI_ENTRIES();
 
 	if (!CHUID_G(enabled)) {
 		return SUCCESS;
 	}
 
-#if !COMPILE_DL_CHUID
-	zend_extension extension = XXX_EXTENSION_ENTRY;
-	extension.handle = NULL;
-	zend_llist_add_element(&zend_extensions, &extension);
-
-	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
-#endif
-
-#ifndef PHP_GINIT
-	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
-#endif /* PHP_GINIT */
+	if (!zext_loaded) {
+	// Register and load Zend Extension part if it has not been registered yet
+		zend_extension extension = XXX_EXTENSION_ENTRY;
+		extension.handle = NULL;
+		zend_llist_add_element(&zend_extensions, &extension);
+	}
 
 	forced_gid = CHUID_G(forced_gid);
 	no_gid     = CHUID_G(no_set_gid);

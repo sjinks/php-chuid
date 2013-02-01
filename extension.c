@@ -2,14 +2,14 @@
  * @file
  * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
  * @version 0.5.0
- * @brief Zend Extensions related stuff — implementation
+ * @brief Zend Extension related stuff — implementation
  */
 
+#include <assert.h>
 #include "extension.h"
 #include "helpers.h"
 
-zend_bool sapi_is_cli = 0; /**< Whether SAPI is CLI */
-zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
+int zext_loaded = 0;  /**< Whether Zend Extension part has been loaded */
 
 /**
  * @brief Extension startup function
@@ -17,20 +17,18 @@ zend_bool sapi_is_cgi = 0; /**< Whether SAPI is CGI */
  * @return Whether extension startup is successful
  * @retval SUCCESS Startup is successful
  * @retval FAILURE Startup is not successful
- * @details Does nothing for compiled-in module; for Zend Extension registers and activates PHP extension module
+ *
+ * Registers and activates PHP extension module if it is not already registered.
+ * This is checked by looking at @c sapi_is_cli value: if it is not -1, the module has already been activated
  */
 static int chuid_zend_startup(zend_extension* extension)
 {
 	PHPCHUID_DEBUG("%s\n", "zend_startup");
 
-#if COMPILE_DL_CHUID
-	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
+	assert(!zext_loaded);
+	zext_loaded = 1;
 
-	return zend_startup_module(&chuid_module_entry);
-#endif
-
-	return SUCCESS;
+	return (-1 == sapi_is_cli) ? zend_startup_module(&chuid_module_entry) : SUCCESS;
 }
 
 /**
