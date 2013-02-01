@@ -1,3 +1,13 @@
+php-chuid (0.5.0-ppa1) precise; urgency=low
+
+  * Removed stealth mode completely
+  * chuid can be loaded both by extension and zend_extension;
+    chuid automatically disables itself when ZTS is enabled but
+    SAPI is neither cli nor cgi
+  * Fixed many old bugs
+
+ -- Vladimir Kolesnikov <vladimir@free-sevastopol.com>  Fri, 01 Feb 2013 08:30:00 +0200
+
 php-chuid (0.4.3-ppa1) precise; urgency=high
 
   * Stealth mode broke chuid completely
