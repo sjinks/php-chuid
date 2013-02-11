@@ -52,7 +52,6 @@ static void chuid_zend_activate(void)
 		/* We must get UID and GID before chrooting */
 		get_docroot_guids(&uid, &gid TSRMLS_CC);
 
-#if HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot) && !sapi_is_cli) {
 			CHUID_G(chrooted) = 0;
 			/*
@@ -92,7 +91,7 @@ static void chuid_zend_activate(void)
 				}
 			}
 		}
-#endif
+
 		if (sapi_is_cli || sapi_is_cgi) {
 			CHUID_G(active) = 0;
 		}

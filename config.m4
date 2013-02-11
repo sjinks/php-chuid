@@ -14,7 +14,7 @@ PHP_ARG_WITH(
 
 
 if test $PHP_CHUID != "no"; then
-	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid fchdir chroot])
+	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid])
 	AC_CHECK_HEADERS([sys/types.h sys/stat.h fcntl.h unistd.h])
 
 	if test "$PHP_CAP" != "no"; then

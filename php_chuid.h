@@ -168,16 +168,12 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	long int default_gid;          /**< Default GID */
 	long int forced_gid;           /**< Forced GID */
 	zend_bool no_set_gid;          /**< Do not set GID */
-#ifdef HAVE_CHROOT
 	char* global_chroot;           /**< Global chroot() directory */
-#if HAVE_FCHDIR && HAVE_CHROOT
 	zend_bool per_req_chroot;      /**< Whether per-request @c chroot() is enabled */
 	char* req_chroot;              /**< Per-request @c chroot */
 	int root_fd;                   /**< Root directory descriptor */
 	zend_bool chrooted;            /**< Whether we need to adjust @c SCRIPT_FILENAME and @c DOCUMENT_ROOT */
 	zend_bool run_sapi_deactivate; /**< Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings */
-#endif
-#endif
 	enum change_xid_mode_t mode;   /**< Change UID/GID mode */
 ZEND_END_MODULE_GLOBALS(chuid)
 

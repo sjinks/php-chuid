@@ -91,14 +91,10 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("chuid.no_set_gid",                  "0",     PHP_INI_SYSTEM,             OnUpdateBool,   no_set_gid,          zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_uid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_uid,         zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY("chuid.default_gid",                   "65534", PHP_INI_SYSTEM,             OnUpdateLong,   default_gid,         zend_chuid_globals, chuid_globals)
-#if HAVE_CHROOT
 	STD_PHP_INI_ENTRY("chuid.global_chroot",                 "",      PHP_INI_SYSTEM,             OnUpdateString, global_chroot,       zend_chuid_globals, chuid_globals)
-#endif
-#if HAVE_FCHDIR && HAVE_CHROOT
 	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot,      zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,          zend_chuid_globals, chuid_globals, chuid_protected_displayer)
 	STD_PHP_INI_BOOLEAN("chuid.run_sapi_deactivate",         "1",     CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateBool,   run_sapi_deactivate, zend_chuid_globals, chuid_globals)
-#endif
 	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM,             OnUpdateLong,   forced_gid,          zend_chuid_globals, chuid_globals)
 PHP_INI_END()
 
@@ -122,14 +118,10 @@ static PHP_MINIT_FUNCTION(chuid)
 	zend_bool no_gid;
 	int num_caps = 0;
 	cap_value_t caps[5];
-#ifdef HAVE_CHROOT
 	zend_bool need_chroot;
 	char* global_chroot;
-#if HAVE_FCHDIR
 	int root_fd;
 	zend_bool per_req_chroot;
-#endif
-#endif /* HAVE_CHROOT */
 
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
 
@@ -172,14 +164,12 @@ static PHP_MINIT_FUNCTION(chuid)
 		return FAILURE;
 	}
 
-#if HAVE_CHROOT
 	global_chroot = CHUID_G(global_chroot);
 	need_chroot   = (global_chroot && *global_chroot && '/' == *global_chroot);
 	if (!need_chroot) {
 		global_chroot = NULL;
 	}
 
-#	if HAVE_FCHDIR
 	if (need_chroot || sapi_is_cli) {
 		CHUID_G(per_req_chroot) = 0;
 	}
@@ -204,7 +194,6 @@ static PHP_MINIT_FUNCTION(chuid)
 		CHUID_G(root_fd) = root_fd;
 		need_chroot      = 1;
 	}
-#	endif /* HAVE_FCHDIR */
 
 	if ((int)CAP_CLEAR == can_chroot && need_chroot) {
 		PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires CAP_SYS_ROOT capability (or root privileges) for chuid.global_chroot/chuid.per_request_chroot to take effect");
@@ -218,7 +207,6 @@ static PHP_MINIT_FUNCTION(chuid)
 			return FAILURE;
 		}
 	}
-#endif /* HAVE_CHROOT */
 
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
@@ -240,14 +228,12 @@ static PHP_MINIT_FUNCTION(chuid)
 			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
 		}
 
-#if HAVE_FCHDIR && HAVE_CHROOT && defined(WITH_CAP_LIBRARY)
+#if defined(WITH_CAP_LIBRARY)
 		if (need_chroot) {
 			caps[num_caps] = CAP_SYS_CHROOT;
 			++num_caps;
 		}
-#endif
 
-#if defined(WITH_CAP_LIBRARY)
 		if (forced_gid < 1 && 0 == no_gid) {
 			caps[num_caps] = CAP_SETGID;
 			++num_caps;
@@ -288,18 +274,15 @@ static PHP_MSHUTDOWN_FUNCTION(chuid)
 		zend_execute_internal = (old_execute_internal == execute_internal) ? NULL : old_execute_internal;
 	}
 
-#if HAVE_FCHDIR && HAVE_CHROOT
 	if (CHUID_G(root_fd) > -1) {
 		close(CHUID_G(root_fd));
 	}
-#endif
 
 	UNREGISTER_INI_ENTRIES();
 
 	return SUCCESS;
 }
 
-#if HAVE_FCHDIR && HAVE_CHROOT
 /**
  * If @c chroot() was performed, adjusts <code>$_SERVER['DOCUMENT_ROOT']</code>, <code>$_SERVER['SCRIPT_FILENAME']</code>,
  * <code>$_ENV['DOCUMENT_ROOT']</code> and <code>$_ENV['SCRIPT_FILENAME']</code> by stripping <code>CHUID_G(req_chroot)</code>
@@ -380,7 +363,6 @@ static PHP_RINIT_FUNCTION(chuid)
 
 	return SUCCESS;
 }
-#endif /* HAVE_FCHDIR && HAVE_CHROOT */
 
 #ifdef PHP_GINIT
 
@@ -468,11 +450,7 @@ zend_module_entry chuid_module_entry = {
 	NULL,
 	PHP_MINIT(chuid),
 	PHP_MSHUTDOWN(chuid),
-#if HAVE_FCHDIR && HAVE_CHROOT
 	PHP_RINIT(chuid),
-#else
-	NULL,
-#endif
 	NULL,
 	PHP_MINFO(chuid),
 #if ZEND_MODULE_API_NO > 20010901

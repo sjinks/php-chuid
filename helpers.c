@@ -225,7 +225,6 @@ void deactivate(TSRMLS_D)
 			}
 		}
 
-#if HAVE_FCHDIR && HAVE_CHROOT
 		if (CHUID_G(per_req_chroot)) {
 			int res;
 
@@ -240,7 +239,6 @@ void deactivate(TSRMLS_D)
 				}
 			}
 		}
-#endif
 	}
 }
 
@@ -269,13 +267,9 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 	}
 
 
-#if HAVE_CHROOT
 	chuid_globals->global_chroot  = NULL;
-#if HAVE_FCHDIR
 	chuid_globals->per_req_chroot = 0;
 	chuid_globals->req_chroot     = NULL;
 	chuid_globals->root_fd        = -1;
 	chuid_globals->chrooted       = 0;
-#endif
-#endif
 }
