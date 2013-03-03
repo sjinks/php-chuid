@@ -1,4 +1,4 @@
-php-chuid (0.5.0-ppa1) precise; urgency=low
+php-chuid (0.5.0-ppa1) quantal; urgency=low
 
   * Removed stealth mode completely
   * chuid can be loaded both by extension and zend_extension;
