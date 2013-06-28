@@ -118,7 +118,6 @@ static PHP_MINIT_FUNCTION(chuid)
 	zend_bool no_gid;
 	zend_bool need_chroot;
 	char* global_chroot;
-	int root_fd;
 	zend_bool per_req_chroot;
 
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
@@ -174,7 +173,7 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	per_req_chroot = CHUID_G(per_req_chroot);
 	if (per_req_chroot) {
-		root_fd = open(
+		int root_fd = open(
 			"/",
 			O_RDONLY
 #		ifdef O_CLOEXEC
@@ -184,6 +183,7 @@ static PHP_MINIT_FUNCTION(chuid)
 			|| O_DIRECTORY
 #		endif
 		);
+
 		if (root_fd < 0) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "open(\"/\", O_RDONLY) failed: %s", strerror(errno));
 			return FAILURE;
