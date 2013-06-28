@@ -116,7 +116,6 @@ static PHP_MINIT_FUNCTION(chuid)
 	int can_setuid          = -1;
 	long int forced_gid;
 	zend_bool no_gid;
-	cap_value_t caps[5];
 	zend_bool need_chroot;
 	char* global_chroot;
 	int root_fd;
@@ -209,6 +208,7 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		int num_caps = 0;
+		cap_value_t caps[5];
 
 		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
