@@ -1,4 +1,11 @@
-language: c
+language:
+  - c
+  - php
+
+php:
+  - 5.3
+  - 5.3.3
+  - 5.4
 
 compiler:
   - gcc
