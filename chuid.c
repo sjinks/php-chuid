@@ -75,7 +75,7 @@ static PHP_INI_DISP(chuid_protected_displayer)
  * <TR><TH>@c chuid.global_chroot</TH><TD>@c string</TD><TD>@c chroot() to this location before processing the request</TD></TR>
  * <TR><TH>@c chuid.enable_per_request_chroot</TH><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
  * <TR><TH>@c chuid.chroot_to</TH><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
- * <TR><TH>@c chuid.run_sapi_deactivate</TH><TD>@c bool</TD><TD>Whether to run SAPI deactivate funcrion after calling SAPI activate to get per-directory settings</TD></TR>
+ * <TR><TH>@c chuid.run_sapi_deactivate</TH><TD>@c bool</TD><TD>Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings</TD></TR>
  * <TR><TH>@c chuid.force_gid</TH><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
