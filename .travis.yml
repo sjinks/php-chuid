@@ -1,6 +1,6 @@
 language:
-  - c
   - php
+  - c
 
 php:
   - 5.2
@@ -13,7 +13,7 @@ compiler:
   - clang
 
 install:
-  - sudo apt-get -qq install php5-dev libcap-dev
+  - sudo apt-get -qq install libcap-dev
 
 script:
-  - phpize && ./configure --with-cap && make
+  - phpize && ./configure --with-cap --silent && make --silent
