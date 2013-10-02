@@ -52,8 +52,11 @@ static void chuid_execute_internal(
 	int return_value_used TSRMLS_DC
 )
 {
-	const char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len  = strlen(lcname);
+#if PHP_VERSION_ID >= 50300
+	const
+#endif
+	char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
+	size_t lcname_len = strlen(lcname);
 
 #ifdef ZEND_ENGINE_2
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
