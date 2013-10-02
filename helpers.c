@@ -23,7 +23,11 @@ HashTable blacklisted_functions;
  * @brief Saved @c zend_execute_internal()
  * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
  */
-void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
+#if PHP_VERSION_ID >= 50500
+void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
+#else
+void (*old_execute_internal)(zend_execute_data*, int TSRMLS_DC);
+#endif
 
 /**
  * @brief @c nobody user ID
@@ -40,7 +44,13 @@ gid_t gid_nogroup = 65534;
  * @param execute_data_ptr Zend Execute Data
  * @param return_value_used Whether the return value is used
  */
-static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC)
+static void chuid_execute_internal(
+	zend_execute_data* execute_data_ptr,
+#if PHP_VERSION_ID >= 50500
+	zend_fcall_info* fci,
+#endif
+	int return_value_used TSRMLS_DC
+)
 {
 	const char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
 	size_t lcname_len  = strlen(lcname);
@@ -64,7 +74,11 @@ static void chuid_execute_internal(zend_execute_data* execute_data_ptr, int retu
 	}
 #endif
 
+#if PHP_VERSION_ID >= 50500
+	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
+#else
 	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
+#endif
 }
 
 /**

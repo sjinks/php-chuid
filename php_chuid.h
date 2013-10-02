@@ -108,7 +108,12 @@ PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;
 PHPCHUID_VISIBILITY_HIDDEN extern gid_t gid_nogroup;
-PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data* execute_data_ptr, int return_value_used TSRMLS_DC);
+
+#if PHP_VERSION_ID >= 50500
+PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
+#else
+PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, int TSRMLS_DC);
+#endif
 
 /**
  * This one is required by php/main/internal_functions.c when chuid is built statically
