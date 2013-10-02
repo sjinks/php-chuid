@@ -63,7 +63,7 @@ static void chuid_zend_activate(void)
 			}
 
 			if (CHUID_G(run_sapi_deactivate) && sapi_module.deactivate) {
-				sapi_module.deactivate();
+				sapi_module.deactivate(TSRMLS_C);
 			}
 
 			char* root = CHUID_G(req_chroot);
@@ -96,7 +96,7 @@ static void chuid_zend_activate(void)
 			CHUID_G(active) = 0;
 		}
 
-		set_guids(uid, gid TSRMLS_C);
+		set_guids(uid, gid TSRMLS_CC);
 
 		PHPCHUID_DEBUG("UID: %d, GID: %d\n", getuid(), getgid());
 	}
