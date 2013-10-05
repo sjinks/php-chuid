@@ -15,21 +15,6 @@
 #include "helpers.h"
 #include "extension.h"
 
-#ifndef PHP_GINIT
-/**
- * @note For pre-5.2 PHPs which do not have PHP_GINIT and PHP_GSHUTDOWN
- * @param chuid_globals Pointer to the extension globals
- */
-static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC);
-#endif
-
-#ifndef ZEND_ENGINE_2
-	/**
-	 * @note Zend Engine 1 has OnUpdateInt instead of OnUpdateLong
-	 */
-#	define OnUpdateLong OnUpdateInt
-#endif
-
 /**
  * @brief Module globals
  */
@@ -121,14 +106,6 @@ static PHP_MINIT_FUNCTION(chuid)
 	zend_bool per_req_chroot;
 
 	PHPCHUID_DEBUG("%s\n", "PHP_MINIT(chuid)");
-
-#ifndef PHP_GINIT
-#ifdef ZTS
-	ts_allocate_id(&chuid_globals_id, sizeof(zend_chuid_globals), (ts_allocate_ctor)chuid_globals_ctor, NULL);
-#else
-	chuid_globals_ctor(&chuid_globals TSRMLS_CC);
-#endif
-#endif
 
 	REGISTER_INI_ENTRIES();
 
@@ -307,10 +284,8 @@ static PHP_RINIT_FUNCTION(chuid)
 		char* root = CHUID_G(req_chroot);
 		size_t len = strlen(root);
 
-#	ifdef ZEND_ENGINE_2
 		zend_is_auto_global("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
 		zend_is_auto_global("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
-#	endif
 
 		if (http_globals[TRACK_VARS_SERVER]) {
 			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var)) {
@@ -365,8 +340,6 @@ static PHP_RINIT_FUNCTION(chuid)
 	return SUCCESS;
 }
 
-#ifdef PHP_GINIT
-
 /**
  * @brief Globals Constructor
  * @param chuid_globals Pointer to the globals container
@@ -379,23 +352,6 @@ static PHP_GINIT_FUNCTION(chuid)
 
 	globals_constructor(chuid_globals);
 }
-
-#else
-
-/**
- * @brief Globals Constructor
- * @param chuid_globals Pointer to the globals container
- *
- * Gets the original values of Effective and Real User and Group IDs and sets @c global_chroot to @c NULL and @c active to 0.
- */
-static void chuid_globals_ctor(zend_chuid_globals* chuid_globals TSRMLS_DC)
-{
-	PHPCHUID_DEBUG("%s\n", "GLOBALS_CTOR(chuid)");
-
-	globals_constructor(chuid_globals);
-}
-
-#endif /* PHP_GINIT */
 
 /**
  * @brief Module Information
@@ -413,7 +369,6 @@ static PHP_MINFO_FUNCTION(chuid)
 	DISPLAY_INI_ENTRIES();
 }
 
-#ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 /**
  * @brief Request Post Deactivate Routine
  * @return Whether shutdown was successful
@@ -432,21 +387,14 @@ static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 	deactivate(TSRMLS_C);
 	return SUCCESS;
 }
-#endif
 
 /**
  * @brief Module Entry
  */
 zend_module_entry chuid_module_entry = {
-#if ZEND_MODULE_API_NO > 20010901
-#	if defined(STANDARD_MODULE_HEADER_EX)
 	STANDARD_MODULE_HEADER_EX,
 	ini_entries,
 	NULL,
-#	else
-	STANDARD_MODULE_HEADER,
-#	endif
-#endif
 	PHP_CHUID_EXTNAME,
 	NULL,
 	PHP_MINIT(chuid),
@@ -454,22 +402,12 @@ zend_module_entry chuid_module_entry = {
 	PHP_RINIT(chuid),
 	NULL,
 	PHP_MINFO(chuid),
-#if ZEND_MODULE_API_NO > 20010901
 	PHP_CHUID_EXTVER,
-#endif
-#ifdef PHP_MODULE_GLOBALS
 	PHP_MODULE_GLOBALS(chuid),
-#	ifdef PHP_GINIT
 	PHP_GINIT(chuid),
 	NULL,
-#	endif
-#endif
-#ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 	ZEND_MODULE_POST_ZEND_DEACTIVATE_N(chuid),
 	STANDARD_MODULE_PROPERTIES_EX
-#else
-	STANDARD_MODULE_PROPERTIES
-#endif
 };
 
 ZEND_GET_MODULE(chuid);

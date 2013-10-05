@@ -58,12 +58,9 @@ static void chuid_execute_internal(
 	char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
 	size_t lcname_len = strlen(lcname);
 
-#ifdef ZEND_ENGINE_2
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
 
 	if (NULL == ce) {
-#endif
-
 		if (0 != CHUID_G(disable_setuid)) {
 			int res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
 
@@ -73,9 +70,7 @@ static void chuid_execute_internal(
 				return;
 			}
 		}
-#ifdef ZEND_ENGINE_2
 	}
-#endif
 
 #if PHP_VERSION_ID >= 50500
 	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);

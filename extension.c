@@ -102,16 +102,6 @@ static void chuid_zend_activate(void)
 	}
 }
 
-#ifndef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
-
-static void chuid_zend_deactivate(void)
-{
-	PHPCHUID_DEBUG("%s\n", "zend_deactivate");
-
-	deactivate();
-}
-#endif
-
 #if COMPILE_DL_CHUID
 ZEND_DLEXPORT
 #endif
@@ -125,11 +115,7 @@ zend_extension XXX_EXTENSION_ENTRY = {
 	chuid_zend_startup,    /* Startup */
 	NULL,                  /* Shutdown */
 	chuid_zend_activate,   /* Activate */
-#ifdef ZEND_MODULE_POST_ZEND_DEACTIVATE_N
 	NULL,                  /* Deactivate */
-#else
-	chuid_zend_deactivate,
-#endif
 
 	NULL, /* Message handler */
 	NULL, /* Op Array Handler */
