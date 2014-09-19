@@ -1,6 +1,6 @@
 /**
  * @file php_chuid.h
- * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
+ * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
  * @version 0.5.0
  * @brief Common include file
  */
@@ -24,7 +24,7 @@
  * @headerfile php_chuid.h
  * @brief Extension author
  */
-#define PHP_CHUID_AUTHOR    "Vladimir Kolesnikov"
+#define PHP_CHUID_AUTHOR    "Volodymyr Kolesnykov"
 
 /**
  * @headerfile php_chuid.h
@@ -35,7 +35,7 @@
 /**
  * @headerfile php_chuid.h
  */
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2013"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2014"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"

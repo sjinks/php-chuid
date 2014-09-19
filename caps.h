@@ -1,7 +1,7 @@
 /**
  * @file
  * @version 0.5.0
- * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
+ * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
  * @brief Interface to libcap — definitions
  */
 

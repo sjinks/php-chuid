@@ -1,6 +1,6 @@
 /**
  * @file
- * @author Vladimir Kolesnikov <vladimir@free-sevastopol.com>
+ * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
  * @version 0.5.0
  * @brief Compatibilty related stuff — implementation
  */
