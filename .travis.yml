@@ -18,3 +18,4 @@ install:
 
 script:
   - phpize && ./configure --with-cap --silent && make --silent
+  - sudo sh -c "NO_INTERACTION=1 make test"
