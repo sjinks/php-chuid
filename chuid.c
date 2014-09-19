@@ -206,7 +206,7 @@ static PHP_MINIT_FUNCTION(chuid)
 			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
 		}
 
-#if defined(WITH_CAP_LIBRARY)
+#if defined(WITH_CAP_LIBRARY) || defined(WITH_CAPNG_LIBRARY)
 		if (need_chroot) {
 			caps[num_caps] = CAP_SYS_CHROOT;
 			++num_caps;

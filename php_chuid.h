@@ -50,8 +50,10 @@
 #	include <unistd.h>
 #endif
 
-#ifdef WITH_CAP_LIBRARY
+#if defined(WITH_CAP_LIBRARY)
 #	include <sys/capability.h>
+#elif defined(WITH_CAPNG_LIBRARY)
+#	include <cap-ng.h>
 #endif
 
 /**

@@ -10,7 +10,7 @@
 
 #include "php_chuid.h"
 
-#ifndef WITH_CAP_LIBRARY
+#if !defined(WITH_CAP_LIBRARY) && !defined(WITH_CAPNG_LIBRARY)
 /* From <sys/capability.h> */
 typedef enum {
 	CAP_CLEAR = 0, //!< CAP_CLEAR

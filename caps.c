@@ -20,19 +20,9 @@
 int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_, int* restrict setuid_, int* restrict setgid_)
 {
 	int retcode = 0;
-	cap_flag_value_t can_sys_chroot      = CAP_CLEAR;
-	cap_flag_value_t can_dac_read_search = CAP_CLEAR;
-	cap_flag_value_t can_setuid          = CAP_CLEAR;
-	cap_flag_value_t can_setgid          = CAP_CLEAR;
+	cap_flag_value_t can_sys_chroot, can_dac_read_search, can_setuid, can_setgid;
 
-#ifndef WITH_CAP_LIBRARY
-	if (0 == geteuid()) {
-		can_sys_chroot      = CAP_SET;
-		can_dac_read_search = CAP_SET;
-		can_setuid          = CAP_SET;
-		can_setgid          = CAP_SET;
-	}
-#else
+#if defined(WITH_CAP_LIBRARY)
 	cap_t capabilities = cap_get_proc();
 
 	if (NULL != capabilities) {
@@ -45,7 +35,29 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 	}
 	else {
 		PHPCHUID_ERROR(E_WARNING, "cap_get_proc(): %s", strerror(errno));
-		retcode = -1;
+		retcode             = -1;
+		can_sys_chroot      = CAP_CLEAR;
+		can_dac_read_search = CAP_CLEAR;
+		can_setuid          = CAP_CLEAR;
+		can_setgid          = CAP_CLEAR;
+	}
+#elif defined(WITH_CAPNG_LIBRARY)
+	can_sys_chroot      = capng_have_capability(CAPNG_EFFECTIVE, CAP_SYS_CHROOT)      ? CAP_CLEAR : CAP_SET;
+	can_dac_read_search = capng_have_capability(CAPNG_EFFECTIVE, CAP_DAC_READ_SEARCH) ? CAP_CLEAR : CAP_SET;
+	can_setgid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETGID)          ? CAP_CLEAR : CAP_SET;
+	can_setuid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETUID)          ? CAP_CLEAR : CAP_SET;
+#else
+	if (0 == geteuid()) {
+		can_sys_chroot      = CAP_SET;
+		can_dac_read_search = CAP_SET;
+		can_setuid          = CAP_SET;
+		can_setgid          = CAP_SET;
+	}
+	else {
+		can_sys_chroot      = CAP_CLEAR;
+		can_dac_read_search = CAP_CLEAR;
+		can_setuid          = CAP_CLEAR;
+		can_setgid          = CAP_CLEAR;
 	}
 #endif
 
@@ -76,7 +88,7 @@ int drop_capabilities(int num_caps, cap_value_t* cap_list)
 	}
 #endif
 
-#ifdef WITH_CAP_LIBRARY
+#if defined(WITH_CAP_LIBRARY)
 	if (num_caps > 0) {
 		cap_t capabilities = cap_init();
 		if (NULL != capabilities) {
@@ -94,6 +106,20 @@ int drop_capabilities(int num_caps, cap_value_t* cap_list)
 		}
 		else {
 			PHPCHUID_ERROR(E_WARNING, "cap_init(): %s", strerror(errno));
+			retval = -1;
+		}
+	}
+#elif defined(WITH_CAPNG_LIBRARY)
+	if (num_caps > 0) {
+		int i;
+
+		capng_clear(CAPNG_SELECT_BOTH);
+		for (i=0; i<num_caps; ++i) {
+			capng_update(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED, cap_list[i]);
+		}
+
+		if (capng_apply(CAPNG_SELECT_BOTH) < 0) {
+			PHPCHUID_ERROR(E_WARNING, "capng_apply(): %s", "failed to update privileges");
 			retval = -1;
 		}
 	}
