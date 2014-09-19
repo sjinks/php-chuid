@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
- * @version 0.5.0
+ * @version 0.6.0
  * @brief PHP CHUID Module
  */
 
@@ -183,6 +183,7 @@ static PHP_MINIT_FUNCTION(chuid)
 		}
 	}
 
+	PHPCHUID_DEBUG("%d %d\n", sapi_is_cli, CHUID_G(cli_disable));
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		int num_caps = 0;
 		cap_value_t caps[5];

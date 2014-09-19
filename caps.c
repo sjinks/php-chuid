@@ -1,6 +1,6 @@
 /**
  * @file caps.c
- * @version 0.5.0
+ * @version 0.6.0
  * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
  * @brief Interface to libcap — implementation
  * @see http://www.kernel.org/doc/man-pages/online/pages/man7/capabilities.7.html
@@ -42,10 +42,10 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 		can_setgid          = CAP_CLEAR;
 	}
 #elif defined(WITH_CAPNG_LIBRARY)
-	can_sys_chroot      = capng_have_capability(CAPNG_EFFECTIVE, CAP_SYS_CHROOT)      ? CAP_CLEAR : CAP_SET;
-	can_dac_read_search = capng_have_capability(CAPNG_EFFECTIVE, CAP_DAC_READ_SEARCH) ? CAP_CLEAR : CAP_SET;
-	can_setgid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETGID)          ? CAP_CLEAR : CAP_SET;
-	can_setuid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETUID)          ? CAP_CLEAR : CAP_SET;
+	can_sys_chroot      = capng_have_capability(CAPNG_EFFECTIVE, CAP_SYS_CHROOT)      ? CAP_SET : CAP_CLEAR;
+	can_dac_read_search = capng_have_capability(CAPNG_EFFECTIVE, CAP_DAC_READ_SEARCH) ? CAP_SET : CAP_CLEAR;
+	can_setgid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETGID)          ? CAP_SET : CAP_CLEAR;
+	can_setuid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETUID)          ? CAP_SET : CAP_CLEAR;
 #else
 	if (0 == geteuid()) {
 		can_sys_chroot      = CAP_SET;

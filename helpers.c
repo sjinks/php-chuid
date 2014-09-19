@@ -1,7 +1,7 @@
 /**
  * @file
  * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
- * @version 0.5.0
+ * @version 0.6.0
  * @brief Helper functions — implementation
  */
 
@@ -87,7 +87,7 @@ static void chuid_execute_internal(
  * @details Disables @c posix_setegid(), @c posix_seteuid(), @c posix_setgid() and @c posix_setuid() functions
  * if @c chuid_globals.disable_setuid is not zero
  * @note If @c HAVE_SETRESUID constant is not defined (i.e., the system does not have @c setresuid() call)
- * and the extension is build without @c libcap support, @c posix_kill(), @c pcntl_setpriority() and @c proc_nice()
+ * and the extension is build without @c libcap or @c libcap-ng support, @c posix_kill(), @c pcntl_setpriority() and @c proc_nice()
  * functions are also disabled, because @c seteuid() changes only the effective UID,
  * not the real one, and it is Real UID that affects those functions' behavior
  */
@@ -100,7 +100,7 @@ void disable_posix_setuids(TSRMLS_D)
 		zend_hash_add(&blacklisted_functions, "posix_seteuid", sizeof("posix_seteuid"), &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_setgid",  sizeof("posix_setgid"),  &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_setuid",  sizeof("posix_setuid"),  &dummy, sizeof(dummy), NULL);
-#if !defined(HAVE_SETRESUID) && !defined(WITH_CAP_LIBRARY)
+#if !defined(HAVE_SETRESUID) && !defined(WITH_CAP_LIBRARY) && !defined(WITH_CAPNG_LIBRARY)
 		zend_hash_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy, sizeof(dummy), NULL);

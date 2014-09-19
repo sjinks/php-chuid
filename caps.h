@@ -1,6 +1,6 @@
 /**
  * @file
- * @version 0.5.0
+ * @version 0.6.0
  * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
  * @brief Interface to libcap — definitions
  */
@@ -10,7 +10,7 @@
 
 #include "php_chuid.h"
 
-#if !defined(WITH_CAP_LIBRARY) && !defined(WITH_CAPNG_LIBRARY)
+#if !defined(WITH_CAP_LIBRARY)
 /* From <sys/capability.h> */
 typedef enum {
 	CAP_CLEAR = 0, //!< CAP_CLEAR

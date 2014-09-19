@@ -12,6 +12,14 @@ PHP_ARG_WITH(
 	[no]
 )
 
+PHP_ARG_WITH(
+	[capng],
+	[for libcap-ng support],
+	[  --with-capng[=DIR]        Include libcap-ng support],
+	[""],
+	[no]
+)
+
 
 if test $PHP_CHUID != "no"; then
 	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid])
@@ -33,6 +41,26 @@ if test $PHP_CHUID != "no"; then
 				],
 				[],
 				[-L$CAP_DIR/$PHP_LIBDIR]
+			)
+		fi
+	fi
+
+	if test "$PHP_CAPNG" != "no"; then
+		for i in $PHP_CAPNG /usr/local /usr; do
+			test -f $i/include/cap-ng.h && CAPNG_DIR=$i && break
+		done
+
+		if test -n "$CAPNG_DIR"; then
+			PHP_CHECK_LIBRARY(
+				[cap-ng],
+				[capng_clear],
+				[
+					PHP_ADD_LIBRARY_WITH_PATH(cap-ng, $CAPNG_DIR/$PHP_LIBDIR, CHUID_SHARED_LIBADD)
+					PHP_ADD_INCLUDE($CAPNG_DIR/include)
+					AC_DEFINE([WITH_CAPNG_LIBRARY], [1], [Whether libcap-ng support is turned on])
+				],
+				[],
+				[-L$CAPNG_DIR/$PHP_LIBDIR]
 			)
 		fi
 	fi
