@@ -2,6 +2,7 @@
 CLI: posix_seteuid() cannot switch back to root
 --INI--
 chuid.enabled=1
+chuid.cli_disable=0
 chuid.default_uid=65534
 chuid.default_gid=65534
 chuid.never_root=1
