@@ -285,8 +285,10 @@ static PHP_RINIT_FUNCTION(chuid)
 		char* root = CHUID_G(req_chroot);
 		size_t len = strlen(root);
 
-		zend_is_auto_global("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
-		zend_is_auto_global("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
+		if (PG(auto_globals_jit)) {
+			zend_is_auto_global("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
+			zend_is_auto_global("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
+		}
 
 		if (http_globals[TRACK_VARS_SERVER]) {
 			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var)) {

@@ -131,6 +131,7 @@ int do_chroot(const char* root TSRMLS_DC)
 	return SUCCESS;
 }
 
+
 /**
  * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
  */
@@ -162,30 +163,13 @@ int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 	return SUCCESS;
 }
 
-static zval* get_global(const char* global, unsigned int global_length TSRMLS_DC)
+static SAPI_INPUT_FILTER_FUNC(dummy_input_filter)
 {
-	if (PG(auto_globals_jit)) {
-#if defined(__GNUC__) && PHP_VERSION_ID >= 50400
-		if (__builtin_constant_p(global) && __builtin_constant_p(global_length)) {
-			zend_is_auto_global_quick(global, global_length - 1, zend_inline_hash_func(global, global_length) TSRMLS_CC);
-		}
-		else
-#endif
-		{
-			zend_is_auto_global(global, global_length - 1 TSRMLS_CC);
-		}
+	if (new_val_len) {
+		*new_val_len = val_len;
 	}
 
-	if (&EG(symbol_table)) {
-		zval** gv;
-		if (zend_hash_find(&EG(symbol_table), global, global_length, (void**)&gv) == SUCCESS) {
-			if (gv && *gv && Z_TYPE_PP(gv) == IS_ARRAY) {
-				return *gv;
-			}
-		}
-	}
-
-	return NULL;
+	return 1;
 }
 
 /**
@@ -195,10 +179,11 @@ static zval* get_global(const char* global, unsigned int global_length TSRMLS_DC
  */
 void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 {
-	char* docroot;
+	char* docroot = NULL;
 	char* docroot_corrected;
 	int res;
 	struct stat statbuf;
+	zval* server = NULL;
 
 	assert(uid != NULL);
 	assert(gid != NULL);
@@ -212,35 +197,55 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	}
 
 	if (NULL != sapi_module.getenv) {
-		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
+		docroot = sapi_module.getenv(ZEND_STRL("DOCUMENT_ROOT") TSRMLS_CC);
 	}
-	else {
-		zval* server = get_global(ZEND_STRS("_SERVER") TSRMLS_CC);
+
+	if (NULL == docroot && NULL != sapi_module.register_server_variables) {
 		zval** value;
+		zval* old_server = PG(http_globals)[TRACK_VARS_SERVER];
+		unsigned int (*orig_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = sapi_module.input_filter;
+		sapi_module.input_filter = dummy_input_filter;
 
-		docroot = NULL;
-		if (server) {
-			assert(Z_TYPE_P(server) == IS_ARRAY);
+		MAKE_STD_ZVAL(server);
+		array_init(server);
+		PG(http_globals)[TRACK_VARS_SERVER] = server;
 
-			if (SUCCESS == zend_hash_quick_find(Z_ARRVAL_P(server), ZEND_STRS("DOCUMENT_ROOT"), zend_inline_hash_func(ZEND_STRS("DOCUMENT_ROOT")), (void**)&value)) {
-				if (Z_TYPE_PP(value) == IS_STRING) {
-					docroot = Z_STRVAL_PP(value);
-				}
+		sapi_module.register_server_variables(server TSRMLS_CC);
+
+		sapi_module.input_filter = orig_input_filter;
+
+		if (SUCCESS == zend_hash_quick_find(Z_ARRVAL_P(server), ZEND_STRS("DOCUMENT_ROOT"), zend_inline_hash_func(ZEND_STRS("DOCUMENT_ROOT")), (void**)&value)) {
+			if (Z_TYPE_PP(value) == IS_STRING) {
+				docroot = Z_STRVAL_PP(value);
 			}
 		}
+
+		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
 	}
 
 	if (NULL == docroot) {
 		PHPCHUID_ERROR(E_WARNING, "%s", "Cannot get DOCUMENT_ROOT");
+		if (server) {
+			zval_ptr_dtor(&server);
+		}
+
 		return;
 	}
 
-	docroot_corrected = (docroot && *docroot) ? docroot : "/";
+	docroot_corrected = (*docroot) ? docroot : "/";
 
 	res = stat(docroot_corrected, &statbuf);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
+		if (server) {
+			zval_ptr_dtor(&server);
+		}
+
 		return;
+	}
+
+	if (server) {
+		zval_ptr_dtor(&server);
 	}
 
 	if (CHUID_G(never_root)) {
