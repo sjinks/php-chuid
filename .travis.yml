@@ -14,8 +14,13 @@ compiler:
   - clang
 
 install:
-  - sudo apt-get -qq install libcap-dev
+  - sudo apt-get -qq install libcap-dev libcap-ng-dev
+
+env:
+  matrix:
+    - CAP="--with-cap" CAPNG="--without-capng"
+    - CAP="--without-cap" CAPNG="--with-capng"
 
 script:
-  - phpize && ./configure --with-cap --silent && make --silent
+  - phpize && ./configure $CAP $CAPNG --silent && make --silent
   - sudo sh -c "NO_INTERACTION=1 make test"
