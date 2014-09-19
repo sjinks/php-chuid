@@ -6,6 +6,7 @@
  */
 
 #include <assert.h>
+#include <grp.h>
 #include "helpers.h"
 #include "caps.h"
 #include "compatibility.h"
@@ -138,11 +139,17 @@ int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 	int res;
 	enum change_xid_mode_t mode = CHUID_G(mode);
 
+	PHPCHUID_DEBUG("set_guids: mode=%d, uid=%d, gid=%d\n", (int)mode, (int)uid, (int)gid);
+
 	if (cxm_setresxid == mode || cxm_setxid == mode) {
 		res = my_setgids(gid, gid, mode);
 		if (0 != res) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, %d): %s", gid, gid, (int)mode, strerror(errno));
 			return FAILURE;
+		}
+
+		if (setgroups(0, NULL)) {
+			PHPCHUID_ERROR(E_CORE_WARNING, "Failed to clear the list of supplementary groups: %s", strerror(errno));
 		}
 	}
 
