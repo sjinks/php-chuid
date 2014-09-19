@@ -104,6 +104,9 @@
 
 PHPCHUID_VISIBILITY_HIDDEN extern int sapi_is_cli;
 PHPCHUID_VISIBILITY_HIDDEN extern int sapi_is_cgi;
+#ifdef ZTS
+PHPCHUID_VISIBILITY_HIDDEN extern int sapi_is_supported;
+#endif
 PHPCHUID_VISIBILITY_HIDDEN extern zend_module_entry chuid_module_entry;
 PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;

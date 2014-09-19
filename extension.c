@@ -100,6 +100,9 @@ static void chuid_zend_activate(void)
 
 		PHPCHUID_DEBUG("UID: %d, GID: %d\n", getuid(), getgid());
 	}
+	else {
+		PHPCHUID_DEBUG("%s\n", "chuid is inactive");
+	}
 }
 
 #if COMPILE_DL_CHUID

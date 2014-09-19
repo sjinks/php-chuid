@@ -110,8 +110,8 @@ static PHP_MINIT_FUNCTION(chuid)
 	REGISTER_INI_ENTRIES();
 
 #ifdef ZTS
-	if (!sapi_is_cli && !sapi_is_cgi) {
-		PHPCHUID_ERROR(E_WARNING, "%s\n", "Deactivating chuid because PHP SAPI is neither cli nor cgi");
+	if (!sapi_is_supported) {
+		PHPCHUID_ERROR(E_WARNING, "Deactivating chuid because PHP SAPI is not supported: %s\n", sapi_module.name);
 		return SUCCESS;
 	}
 #endif

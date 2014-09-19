@@ -10,8 +10,11 @@
 #include "caps.h"
 #include "compatibility.h"
 
-int sapi_is_cli = -1; /**< Whether SAPI is CLI */
-int sapi_is_cgi = -1; /**< Whether SAPI is CGI */
+int sapi_is_cli       = -1; /**< Whether SAPI is CLI */
+int sapi_is_cgi       = -1; /**< Whether SAPI is CGI */
+#ifdef ZTS
+int sapi_is_supported = -1; /**< Whether SAPI is supported */
+#endif
 
 /**
  * @brief Hash table with the names of the blacklisted functions
@@ -187,7 +190,7 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 		return;
 	}
 
-	docroot_corrected = docroot && *docroot ? docroot : "/";
+	docroot_corrected = (docroot && *docroot) ? docroot : "/";
 
 	res = stat(docroot_corrected, &statbuf);
 	if (0 != res) {
@@ -262,7 +265,16 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 	assert(-1 == sapi_is_cgi);
 
 	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi")) ;
+
+#ifdef ZTS
+	sapi_is_supported =
+		   sapi_is_cli
+		|| sapi_is_cgi
+		|| (0 == strncmp(sapi_module.name, "cgi-", 4))
+		|| (0 == strncmp(sapi_module.name, "cli-", 4))
+	;
+#endif
 
 	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
 	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
