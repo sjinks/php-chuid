@@ -1,5 +1,5 @@
 --TEST--
-Test #1
+Root when chuid is disabled
 --INI--
 chuid.enabled=0
 --SKIPIF--
