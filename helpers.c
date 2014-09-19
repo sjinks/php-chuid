@@ -162,6 +162,32 @@ int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 	return SUCCESS;
 }
 
+static zval* get_global(const char* global, unsigned int global_length TSRMLS_DC)
+{
+	if (PG(auto_globals_jit)) {
+#if defined(__GNUC__) && PHP_VERSION_ID >= 50400
+		if (__builtin_constant_p(global) && __builtin_constant_p(global_length)) {
+			zend_is_auto_global_quick(global, global_length - 1, zend_inline_hash_func(global, global_length) TSRMLS_CC);
+		}
+		else
+#endif
+		{
+			zend_is_auto_global(global, global_length - 1 TSRMLS_CC);
+		}
+	}
+
+	if (&EG(symbol_table)) {
+		zval** gv;
+		if (zend_hash_find(&EG(symbol_table), global, global_length, (void**)&gv) == SUCCESS) {
+			if (gv && *gv && Z_TYPE_PP(gv) == IS_ARRAY) {
+				return *gv;
+			}
+		}
+	}
+
+	return NULL;
+}
+
 /**
  * Tries to get UID and GID of the owner of the @c DOCUMENT_ROOT.
  * If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
@@ -189,7 +215,19 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 		docroot = sapi_module.getenv("DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT")-1 TSRMLS_CC);
 	}
 	else {
+		zval* server = get_global(ZEND_STRS("_SERVER") TSRMLS_CC);
+		zval** value;
+
 		docroot = NULL;
+		if (server) {
+			assert(Z_TYPE_P(server) == IS_ARRAY);
+
+			if (SUCCESS == zend_hash_quick_find(Z_ARRVAL_P(server), ZEND_STRS("DOCUMENT_ROOT"), zend_inline_hash_func(ZEND_STRS("DOCUMENT_ROOT")), (void**)&value)) {
+				if (Z_TYPE_PP(value) == IS_STRING) {
+					docroot = Z_STRVAL_PP(value);
+				}
+			}
+		}
 	}
 
 	if (NULL == docroot) {
