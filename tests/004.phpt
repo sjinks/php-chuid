@@ -6,8 +6,6 @@ chuid.cli_disable=0
 chuid.default_uid=65534
 chuid.default_gid=65534
 chuid.never_root=1
-report_memleaks=0
-display_errors=0
 --SKIPIF--
 <?php require 'skipif.inc'; ?>
 --FILE--

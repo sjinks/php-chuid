@@ -5,8 +5,7 @@ chuid.enabled=1
 chuid.default_uid=65534
 chuid.default_gid=65534
 chuid.never_root=1
-report_memleaks=0
-display_errors=0
+error_reporting=E_ALL & ~E_WARNING
 --GET--
 dummy=1
 --SKIPIF--
