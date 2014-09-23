@@ -94,10 +94,7 @@ PHP_INI_END()
  */
 static PHP_MINIT_FUNCTION(chuid)
 {
-	int can_dac_read_search = -1;
-	int can_chroot          = -1;
-	int can_setgid          = -1;
-	int can_setuid          = -1;
+	int can_chroot = -1;
 	long int forced_gid;
 	zend_bool no_gid;
 	zend_bool need_chroot;
@@ -132,9 +129,19 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	disable_posix_setuids(TSRMLS_C);
 
-	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid)) {
-		PHPCHUID_ERROR(E_CORE_ERROR, "%s\n", "check_capabilities() failed");
-		return FAILURE;
+	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
+		int can_setgid = -1;
+		int can_setuid = -1;
+
+		if (0 != check_capabilities(&can_chroot, &can_setuid)) {
+			PHPCHUID_ERROR(E_CORE_ERROR, "%s\n", "check_capabilities() failed");
+			return FAILURE;
+		}
+
+		if ((int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
+			PHPCHUID_ERROR(E_CORE_WARNING, "%s", "CAP_SETUID is not set - disabling chuid");
+			return SUCCESS;
+		}
 	}
 
 	global_chroot = CHUID_G(global_chroot);
@@ -185,11 +192,6 @@ static PHP_MINIT_FUNCTION(chuid)
 		int num_caps = 0;
 		cap_value_t caps[5];
 
-		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
-			PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
-			return FAILURE;
-		}
-
 		if (forced_gid > 0) {
 			if (0 != setgid((gid_t)forced_gid)) {
 				zend_error(E_CORE_ERROR, "setgid(%ld) failed", forced_gid);
@@ -222,8 +224,8 @@ static PHP_MINIT_FUNCTION(chuid)
 		++num_caps;
 #endif
 
-		if (0 != drop_capabilities(num_caps, caps)) {
-			zend_error(E_CORE_ERROR, "drop_capabilities() failed");
+		if (0 != drop_capabilities_except(num_caps, caps)) {
+			zend_error(E_CORE_ERROR, "Failed to drop capabilities");
 			return FAILURE;
 		}
 
