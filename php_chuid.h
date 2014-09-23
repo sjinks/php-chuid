@@ -165,6 +165,12 @@ enum change_xid_mode_t {
  * @brief Module Globals
  */
 ZEND_BEGIN_MODULE_GLOBALS(chuid)
+	long int default_uid;          /**< Default UID */
+	long int default_gid;          /**< Default GID */
+	long int forced_gid;           /**< Forced GID */
+	char* global_chroot;           /**< Global chroot() directory */
+	char* req_chroot;              /**< Per-request @c chroot */
+	int root_fd;                   /**< Root directory descriptor */
 	uid_t ruid;                    /**< Saved Real User ID */
 	uid_t euid;                    /**< Saved Effective User ID */
 	gid_t rgid;                    /**< Saved Real Group ID */
@@ -174,14 +180,8 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	zend_bool active;              /**< Internal flag */
 	zend_bool never_root;          /**< Never run the request as root */
 	zend_bool cli_disable;         /**< Do not change UIDs/GIDs when SAPI is CLI */
-	long int default_uid;          /**< Default UID */
-	long int default_gid;          /**< Default GID */
-	long int forced_gid;           /**< Forced GID */
 	zend_bool no_set_gid;          /**< Do not set GID */
-	char* global_chroot;           /**< Global chroot() directory */
 	zend_bool per_req_chroot;      /**< Whether per-request @c chroot() is enabled */
-	char* req_chroot;              /**< Per-request @c chroot */
-	int root_fd;                   /**< Root directory descriptor */
 	zend_bool chrooted;            /**< Whether we need to adjust @c SCRIPT_FILENAME and @c DOCUMENT_ROOT */
 	zend_bool run_sapi_deactivate; /**< Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings */
 	enum change_xid_mode_t mode;   /**< Change UID/GID mode */
