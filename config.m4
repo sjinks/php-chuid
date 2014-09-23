@@ -38,6 +38,7 @@ if test $PHP_CHUID != "no"; then
 					PHP_ADD_LIBRARY_WITH_PATH(cap, $CAP_DIR/$PHP_LIBDIR, CHUID_SHARED_LIBADD)
 					PHP_ADD_INCLUDE($CAP_DIR/include)
 					AC_DEFINE([WITH_CAP_LIBRARY], [1], [Whether libcap support is turned on])
+					PHP_CAPNG="no"
 				],
 				[],
 				[-L$CAP_DIR/$PHP_LIBDIR]
