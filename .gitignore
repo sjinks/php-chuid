@@ -1,5 +1,6 @@
 *.lo
 *.la
+*.*~
 build
 include
 modules
@@ -38,3 +39,9 @@ macros.h
 /debian/php5-chuid.*.log
 /debian/php5-chuid.substvars
 /debian/php5-chuid/
+/tests/*.diff
+/tests/*.exp
+/tests/*.log
+/tests/*.out
+/tests/*.php
+/tests/*.sh

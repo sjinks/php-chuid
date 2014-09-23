@@ -17,54 +17,42 @@
  * @todo In theory, cap_get_flag() may fail. Very unlikely :-) Anyway, maybe add a check?
  * @note Only @c EFFECTIVE set is checked
  */
-int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_, int* restrict setuid_, int* restrict setgid_)
+int check_capabilities(int* restrict sys_chroot_, int* restrict setuid_)
 {
 	int retcode = 0;
-	cap_flag_value_t can_sys_chroot, can_dac_read_search, can_setuid, can_setgid;
+	cap_flag_value_t can_sys_chroot, can_setuid;
 
 #if defined(WITH_CAP_LIBRARY)
 	cap_t capabilities = cap_get_proc();
 
 	if (NULL != capabilities) {
-		cap_get_flag(capabilities, CAP_SYS_CHROOT,      CAP_EFFECTIVE, &can_sys_chroot);
-		cap_get_flag(capabilities, CAP_DAC_READ_SEARCH, CAP_EFFECTIVE, &can_dac_read_search);
-		cap_get_flag(capabilities, CAP_SETGID,          CAP_EFFECTIVE, &can_setgid);
-		cap_get_flag(capabilities, CAP_SETUID,          CAP_EFFECTIVE, &can_setuid);
+		cap_get_flag(capabilities, CAP_SYS_CHROOT, CAP_EFFECTIVE, &can_sys_chroot);
+		cap_get_flag(capabilities, CAP_SETUID,     CAP_EFFECTIVE, &can_setuid);
 
 		cap_free(capabilities);
 	}
 	else {
 		PHPCHUID_ERROR(E_WARNING, "cap_get_proc(): %s", strerror(errno));
-		retcode             = -1;
-		can_sys_chroot      = CAP_CLEAR;
-		can_dac_read_search = CAP_CLEAR;
-		can_setuid          = CAP_CLEAR;
-		can_setgid          = CAP_CLEAR;
+		retcode        = -1;
+		can_sys_chroot = CAP_CLEAR;
+		can_setuid     = CAP_CLEAR;
 	}
 #elif defined(WITH_CAPNG_LIBRARY)
-	can_sys_chroot      = capng_have_capability(CAPNG_EFFECTIVE, CAP_SYS_CHROOT)      ? CAP_SET : CAP_CLEAR;
-	can_dac_read_search = capng_have_capability(CAPNG_EFFECTIVE, CAP_DAC_READ_SEARCH) ? CAP_SET : CAP_CLEAR;
-	can_setgid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETGID)          ? CAP_SET : CAP_CLEAR;
-	can_setuid          = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETUID)          ? CAP_SET : CAP_CLEAR;
+	can_sys_chroot = capng_have_capability(CAPNG_EFFECTIVE, CAP_SYS_CHROOT) ? CAP_SET : CAP_CLEAR;
+	can_setuid     = capng_have_capability(CAPNG_EFFECTIVE, CAP_SETUID)     ? CAP_SET : CAP_CLEAR;
 #else
 	if (0 == geteuid()) {
-		can_sys_chroot      = CAP_SET;
-		can_dac_read_search = CAP_SET;
-		can_setuid          = CAP_SET;
-		can_setgid          = CAP_SET;
+		can_sys_chroot = CAP_SET;
+		can_setuid     = CAP_SET;
 	}
 	else {
-		can_sys_chroot      = CAP_CLEAR;
-		can_dac_read_search = CAP_CLEAR;
-		can_setuid          = CAP_CLEAR;
-		can_setgid          = CAP_CLEAR;
+		can_sys_chroot = CAP_CLEAR;
+		can_setuid     = CAP_CLEAR;
 	}
 #endif
 
-	if (NULL != sys_chroot_)      { *sys_chroot_      = (int)can_sys_chroot; }
-	if (NULL != setuid_)          { *setuid_          = (int)can_setuid; }
-	if (NULL != setgid_)          { *setgid_          = (int)can_setgid; }
-	if (NULL != dac_read_search_) { *dac_read_search_ = (int)can_dac_read_search; }
+	if (NULL != sys_chroot_) { *sys_chroot_ = (int)can_sys_chroot; }
+	if (NULL != setuid_)     { *setuid_     = (int)can_setuid; }
 
 	return retcode;
 }
@@ -72,14 +60,14 @@ int check_capabilities(int* restrict sys_chroot_, int* restrict dac_read_search_
 /**
  * @todo In theory, @c cap_set_flag() may fail, maybe add a check?
  */
-int drop_capabilities(int num_caps, cap_value_t* cap_list)
+int drop_capabilities_except(int num_caps, cap_value_t* cap_list)
 {
 	int retval = 0;
 
 	assert(cap_list != NULL);
 
 #ifdef DEBUG
-	fprintf(stderr, "drop_capabilities: num_caps=%d\n", num_caps);
+	fprintf(stderr, "drop_capabilities_except: num_caps=%d\n", num_caps);
 	{
 		int i;
 		for (i=0; i<num_caps; ++i) {

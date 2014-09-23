@@ -22,7 +22,7 @@ PHP_ARG_WITH(
 
 
 if test $PHP_CHUID != "no"; then
-	AC_CHECK_FUNCS([getresuid setresuid setresgid getresgid setreuid setregid])
+	AC_CHECK_FUNCS([getresuid setresuid])
 	AC_CHECK_HEADERS([sys/types.h sys/stat.h fcntl.h unistd.h])
 
 	if test "$PHP_CAP" != "no"; then
@@ -38,6 +38,7 @@ if test $PHP_CHUID != "no"; then
 					PHP_ADD_LIBRARY_WITH_PATH(cap, $CAP_DIR/$PHP_LIBDIR, CHUID_SHARED_LIBADD)
 					PHP_ADD_INCLUDE($CAP_DIR/include)
 					AC_DEFINE([WITH_CAP_LIBRARY], [1], [Whether libcap support is turned on])
+					PHP_CAPNG="no"
 				],
 				[],
 				[-L$CAP_DIR/$PHP_LIBDIR]
@@ -66,7 +67,7 @@ if test $PHP_CHUID != "no"; then
 	fi
 
 	PHP_ADD_LIBRARY_WITH_PATH(apparmor, /usr/lib, CHUID_SHARED_LIBADD)
-	PHP_NEW_EXTENSION(chuid, [chuid.c compatibility.c caps.c helpers.c extension.c], $ext_shared, [cgi], [-Wall -std=gnu99 -D_GNU_SOURCE])
+	PHP_NEW_EXTENSION(chuid, [chuid.c caps.c helpers.c extension.c], $ext_shared, [cgi], [-Wall -std=gnu99 -D_GNU_SOURCE])
 	PHP_SUBST(CHUID_SHARED_LIBADD)
 	PHP_ADD_MAKEFILE_FRAGMENT
 fi

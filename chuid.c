@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "compatibility.h"
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"
@@ -95,10 +94,7 @@ PHP_INI_END()
  */
 static PHP_MINIT_FUNCTION(chuid)
 {
-	int can_dac_read_search = -1;
-	int can_chroot          = -1;
-	int can_setgid          = -1;
-	int can_setuid          = -1;
+	int can_chroot = -1;
 	long int forced_gid;
 	zend_bool no_gid;
 	zend_bool need_chroot;
@@ -122,7 +118,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	}
 
 	if (!zext_loaded) {
-	// Register and load Zend Extension part if it has not been registered yet
+	/* Register and load Zend Extension part if it has not been registered yet */
 		zend_extension extension = XXX_EXTENSION_ENTRY;
 		extension.handle = NULL;
 		zend_llist_add_element(&zend_extensions, &extension);
@@ -133,9 +129,19 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	disable_posix_setuids(TSRMLS_C);
 
-	if (0 != check_capabilities(&can_chroot, &can_dac_read_search, &can_setuid, &can_setgid)) {
-		PHPCHUID_ERROR(E_CORE_ERROR, "%s\n", "check_capabilities() failed");
-		return FAILURE;
+	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
+		int can_setgid = -1;
+		int can_setuid = -1;
+
+		if (0 != check_capabilities(&can_chroot, &can_setuid)) {
+			PHPCHUID_ERROR(E_CORE_ERROR, "%s\n", "check_capabilities() failed");
+			return FAILURE;
+		}
+
+		if ((int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
+			PHPCHUID_ERROR(E_CORE_WARNING, "%s", "CAP_SETUID is not set - disabling chuid");
+			return SUCCESS;
+		}
 	}
 
 	global_chroot = CHUID_G(global_chroot);
@@ -177,21 +183,14 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	PHPCHUID_DEBUG("Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
 
-	if (global_chroot) {
-		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
-			return FAILURE;
-		}
+	if (global_chroot && FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
+		return FAILURE;
 	}
 
 	PHPCHUID_DEBUG("%d %d\n", sapi_is_cli, CHUID_G(cli_disable));
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		int num_caps = 0;
 		cap_value_t caps[5];
-
-		if ((int)CAP_CLEAR == can_dac_read_search || (int)CAP_CLEAR == can_setuid || (int)CAP_CLEAR == can_setgid) {
-			PHPCHUID_ERROR(E_CORE_ERROR, "%s", "chuid module requires that these capabilities (or root privileges) be set: CAP_DAC_READ_SEARCH, CAP_SETGID, CAP_SETUID");
-			return FAILURE;
-		}
 
 		if (forced_gid > 0) {
 			if (0 != setgid((gid_t)forced_gid)) {
@@ -225,8 +224,8 @@ static PHP_MINIT_FUNCTION(chuid)
 		++num_caps;
 #endif
 
-		if (0 != drop_capabilities(num_caps, caps)) {
-			zend_error(E_CORE_ERROR, "drop_capabilities() failed");
+		if (0 != drop_capabilities_except(num_caps, caps)) {
+			zend_error(E_CORE_ERROR, "Failed to drop capabilities");
 			return FAILURE;
 		}
 
@@ -353,7 +352,45 @@ static PHP_GINIT_FUNCTION(chuid)
 {
 	PHPCHUID_DEBUG("%s\n", "PHP_GINIT(chuid)");
 
-	globals_constructor(chuid_globals);
+	struct passwd* pwd;
+	uid_t suid;
+	gid_t sgid;
+
+	assert(-1 == sapi_is_cli);
+	assert(-1 == sapi_is_cgi);
+
+	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi")) ;
+
+#ifdef ZTS
+	sapi_is_supported =
+		   sapi_is_cli
+		|| sapi_is_cgi
+		|| (0 == strncmp(sapi_module.name, "cgi-", 4))
+		|| (0 == strncmp(sapi_module.name, "cli-", 4))
+	;
+#endif
+
+	getresuid(&chuid_globals->ruid, &chuid_globals->euid, &suid);
+	getresgid(&chuid_globals->rgid, &chuid_globals->egid, &sgid);
+	chuid_globals->active = 0;
+
+	errno = 0;
+	pwd   = getpwnam("nobody");
+	if (NULL != pwd) {
+		uid_nobody  = pwd->pw_uid;
+		gid_nogroup = pwd->pw_gid;
+	}
+	else {
+		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
+	}
+
+
+	chuid_globals->global_chroot  = NULL;
+	chuid_globals->per_req_chroot = 0;
+	chuid_globals->req_chroot     = NULL;
+	chuid_globals->root_fd        = -1;
+	chuid_globals->chrooted       = 0;
 }
 
 /**
