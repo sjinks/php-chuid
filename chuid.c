@@ -121,7 +121,7 @@ static PHP_MINIT_FUNCTION(chuid)
 	}
 
 	if (!zext_loaded) {
-	// Register and load Zend Extension part if it has not been registered yet
+	/* Register and load Zend Extension part if it has not been registered yet */
 		zend_extension extension = XXX_EXTENSION_ENTRY;
 		extension.handle = NULL;
 		zend_llist_add_element(&zend_extensions, &extension);
@@ -176,10 +176,8 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	PHPCHUID_DEBUG("Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
 
-	if (global_chroot) {
-		if (FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
-			return FAILURE;
-		}
+	if (global_chroot && FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
+		return FAILURE;
 	}
 
 	PHPCHUID_DEBUG("%d %d\n", sapi_is_cli, CHUID_G(cli_disable));
@@ -352,7 +350,45 @@ static PHP_GINIT_FUNCTION(chuid)
 {
 	PHPCHUID_DEBUG("%s\n", "PHP_GINIT(chuid)");
 
-	globals_constructor(chuid_globals);
+	struct passwd* pwd;
+	uid_t suid;
+	gid_t sgid;
+
+	assert(-1 == sapi_is_cli);
+	assert(-1 == sapi_is_cgi);
+
+	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi")) ;
+
+#ifdef ZTS
+	sapi_is_supported =
+		   sapi_is_cli
+		|| sapi_is_cgi
+		|| (0 == strncmp(sapi_module.name, "cgi-", 4))
+		|| (0 == strncmp(sapi_module.name, "cli-", 4))
+	;
+#endif
+
+	getresuid(&chuid_globals->ruid, &chuid_globals->euid, &suid);
+	getresgid(&chuid_globals->rgid, &chuid_globals->egid, &sgid);
+	chuid_globals->active = 0;
+
+	errno = 0;
+	pwd   = getpwnam("nobody");
+	if (NULL != pwd) {
+		uid_nobody  = pwd->pw_uid;
+		gid_nogroup = pwd->pw_gid;
+	}
+	else {
+		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
+	}
+
+
+	chuid_globals->global_chroot  = NULL;
+	chuid_globals->per_req_chroot = 0;
+	chuid_globals->req_chroot     = NULL;
+	chuid_globals->root_fd        = -1;
+	chuid_globals->chrooted       = 0;
 }
 
 /**

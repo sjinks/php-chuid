@@ -113,15 +113,13 @@ void disable_posix_setuids(TSRMLS_D)
 	if (0 != CHUID_G(disable_setuid)) {
 		unsigned long int dummy = 0;
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
-		zend_hash_add(&blacklisted_functions, "posix_setegid", sizeof("posix_setegid"), &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_seteuid", sizeof("posix_seteuid"), &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_setgid",  sizeof("posix_setgid"),  &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_setuid",  sizeof("posix_setuid"),  &dummy, sizeof(dummy), NULL);
-#if !defined(HAVE_SETRESUID) && !defined(WITH_CAP_LIBRARY) && !defined(WITH_CAPNG_LIBRARY)
+		zend_hash_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid"),      &dummy, sizeof(dummy), NULL);
+		zend_hash_add(&blacklisted_functions, "posix_setuid",      sizeof("posix_setuid"),      &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy, sizeof(dummy), NULL);
-#endif
 
 		old_execute_internal = zend_execute_internal;
 		if (NULL == old_execute_internal) {
@@ -322,47 +320,4 @@ void deactivate(TSRMLS_D)
 			}
 		}
 	}
-}
-
-void globals_constructor(zend_chuid_globals* chuid_globals)
-{
-	struct passwd* pwd;
-	uid_t suid;
-	gid_t sgid;
-
-	assert(-1 == sapi_is_cli);
-	assert(-1 == sapi_is_cgi);
-
-	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi")) ;
-
-#ifdef ZTS
-	sapi_is_supported =
-		   sapi_is_cli
-		|| sapi_is_cgi
-		|| (0 == strncmp(sapi_module.name, "cgi-", 4))
-		|| (0 == strncmp(sapi_module.name, "cli-", 4))
-	;
-#endif
-
-	getresuid(&chuid_globals->ruid, &chuid_globals->euid, &suid);
-	getresgid(&chuid_globals->rgid, &chuid_globals->egid, &sgid);
-	chuid_globals->active = 0;
-
-	errno = 0;
-	pwd   = getpwnam("nobody");
-	if (NULL != pwd) {
-		uid_nobody  = pwd->pw_uid;
-		gid_nogroup = pwd->pw_gid;
-	}
-	else {
-		PHPCHUID_ERROR(E_WARNING, "getpwnam(nobody) failed: %s", strerror(errno));
-	}
-
-
-	chuid_globals->global_chroot  = NULL;
-	chuid_globals->per_req_chroot = 0;
-	chuid_globals->req_chroot     = NULL;
-	chuid_globals->root_fd        = -1;
-	chuid_globals->chrooted       = 0;
 }
