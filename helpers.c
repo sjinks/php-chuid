@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <grp.h>
+#include <sys/apparmor.h>
 #include "helpers.h"
 #include "caps.h"
 #include "compatibility.h"
@@ -277,6 +278,11 @@ void deactivate(TSRMLS_D)
 		gid_t rgid = CHUID_G(rgid);
 		gid_t egid = CHUID_G(egid);
 		enum change_xid_mode_t mode = CHUID_G(mode);
+
+		res = aa_change_hat(NULL, CHUID_G(token));
+		if (0 != res) {
+			PHPCHUID_ERROR(E_WARNING, "aa_change_hat(NULL): %s", strerror(errno));
+		}
 
 		res = my_setuids(ruid, euid, mode);
 		if (0 != res) {

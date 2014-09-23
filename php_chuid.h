@@ -168,6 +168,7 @@ ZEND_BEGIN_MODULE_GLOBALS(chuid)
 	long int default_uid;          /**< Default UID */
 	long int default_gid;          /**< Default GID */
 	long int forced_gid;           /**< Forced GID */
+	unsigned long int token;
 	char* global_chroot;           /**< Global chroot() directory */
 	char* req_chroot;              /**< Per-request @c chroot */
 	int root_fd;                   /**< Root directory descriptor */

@@ -6,6 +6,7 @@
  */
 
 #include <assert.h>
+#include <sys/apparmor.h>
 #include "extension.h"
 #include "helpers.h"
 
@@ -97,6 +98,21 @@ static void chuid_zend_activate(void)
 		}
 
 		set_guids(uid, gid TSRMLS_CC);
+
+		{
+			unsigned long token;
+			FILE* f = fopen("/dev/urandom", "rb");
+			if (fread(&token, sizeof(token), 1, f)) {}
+			CHUID_G(token) = token;
+			fclose(f);
+			if (aa_change_hat("unpriv", token) < 0) {
+				char* con;
+				char* mode;
+				aa_getcon(&con, &mode);
+				PHPCHUID_ERROR(E_WARNING, "aa_change_hat(unpriv): %s (%s %s)", strerror(errno), con, mode);
+				free(con);
+			}
+		}
 
 		PHPCHUID_DEBUG("UID: %d, GID: %d\n", getuid(), getgid());
 	}
