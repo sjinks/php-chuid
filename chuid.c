@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "compatibility.h"
 #include "caps.h"
 #include "helpers.h"
 #include "extension.h"

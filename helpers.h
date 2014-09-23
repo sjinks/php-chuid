@@ -11,6 +11,28 @@
 #include "php_chuid.h"
 
 /**
+ * @brief Sets the Real, Effective and Saved User ID
+ * @param ruid Real UID
+ * @param euid Effective UID
+ * @param mode Function to be used
+ * @return Whether call succeeded
+ * @retval 0 Yes
+ * @retval -1 No (@c errno will be set)
+ */
+PHPCHUID_VISIBILITY_HIDDEN int my_setuids(uid_t ruid, uid_t euid, enum change_xid_mode_t mode);
+
+/**
+ * @brief Sets the Real, Effective and Saved Group ID
+ * @param rgid Real GID
+ * @param egid Effective GID
+ * @param mode Function to be used
+ * @return Whether call succeeded
+ * @retval 0 Yes
+ * @retval -1 No (@c errno will be set)
+ */
+PHPCHUID_VISIBILITY_HIDDEN int my_setgids(gid_t rgid, gid_t egid, enum change_xid_mode_t mode);
+
+/**
  * @brief Disables <code>posix_set{e,}{u,g}id()</code> PHP functions if told by @c chuid.disable_posix_setuid_family
  */
 PHPCHUID_VISIBILITY_HIDDEN void disable_posix_setuids(TSRMLS_D);

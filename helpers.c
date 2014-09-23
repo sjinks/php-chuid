@@ -9,7 +9,6 @@
 #include <grp.h>
 #include "helpers.h"
 #include "caps.h"
-#include "compatibility.h"
 
 int sapi_is_cli       = -1; /**< Whether SAPI is CLI */
 int sapi_is_cgi       = -1; /**< Whether SAPI is CGI */
@@ -81,6 +80,24 @@ static void chuid_execute_internal(
 #else
 	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
 #endif
+}
+
+int my_setuids(uid_t ruid, uid_t euid, enum change_xid_mode_t mode)
+{
+	if (cxm_setuid == mode || cxm_setxid == mode) {
+		return setuid(euid);
+	}
+
+	return setresuid(ruid, euid, 0);
+}
+
+int my_setgids(gid_t rgid, gid_t egid, enum change_xid_mode_t mode)
+{
+	if (cxm_setxid == mode) {
+		return setgid(egid);
+	}
+
+	return setresgid(rgid, egid, 0);
 }
 
 /**
@@ -310,6 +327,8 @@ void deactivate(TSRMLS_D)
 void globals_constructor(zend_chuid_globals* chuid_globals)
 {
 	struct passwd* pwd;
+	uid_t suid;
+	gid_t sgid;
 
 	assert(-1 == sapi_is_cli);
 	assert(-1 == sapi_is_cgi);
@@ -326,8 +345,8 @@ void globals_constructor(zend_chuid_globals* chuid_globals)
 	;
 #endif
 
-	my_getuids(&chuid_globals->ruid, &chuid_globals->euid);
-	my_getgids(&chuid_globals->rgid, &chuid_globals->egid);
+	getresuid(&chuid_globals->ruid, &chuid_globals->euid, &suid);
+	getresgid(&chuid_globals->rgid, &chuid_globals->egid, &sgid);
 	chuid_globals->active = 0;
 
 	errno = 0;
