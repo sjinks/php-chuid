@@ -78,6 +78,3 @@ All privileges are dropped during `activate()` phase and restored during `post_d
   * `chuid.run_sapi_deactivate`: Whether to run SAPI deactivate function after calling SAPI activate to get per directory settings
     * boolean, defaults to 1
     * PHP_INI_SYSTEM | PHP_INI_PER_DIR
-  * `chuid.force_gid`: forcefully set this GID. If positive, `CAP_SETGID` privilege will be dropped. Takes precedence over `chuid.default_gid`
-    * integer, defaults to -1
-    * PHP_INI_SYSTEM

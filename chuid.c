@@ -60,7 +60,6 @@ static PHP_INI_DISP(chuid_protected_displayer)
  * <TR><TH>@c chuid.enable_per_request_chroot</TH><TD>@c bool</TD><TD>Whether to enable per-request @c chroot(). Disabled when @c chuid.global_chroot is set</TD></TR>
  * <TR><TH>@c chuid.chroot_to</TH><TD>@c string</TD><TD>Per-request chroot. Used only when @c chuid.enable_per_request_chroot is enabled</TD></TR>
  * <TR><TH>@c chuid.run_sapi_deactivate</TH><TD>@c bool</TD><TD>Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings</TD></TR>
- * <TR><TH>@c chuid.force_gid</TH><TD>@c int</TD><TD>Force setting this GID. If positive, @c CAP_SETGID privilege will be dropped. Takes precedence over @c chuid.default_gid</TD></TR>
  * </TABLE>
  */
 PHP_INI_BEGIN()
@@ -79,7 +78,6 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("chuid.enable_per_request_chroot",   "0",     PHP_INI_SYSTEM,             OnUpdateBool,   per_req_chroot,      zend_chuid_globals, chuid_globals)
 	STD_PHP_INI_ENTRY_EX("chuid.chroot_to",                  "",      CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateString, req_chroot,          zend_chuid_globals, chuid_globals, chuid_protected_displayer)
 	STD_PHP_INI_BOOLEAN("chuid.run_sapi_deactivate",         "1",     CHUID_INI_SYSTEM_OR_PERDIR, OnUpdateBool,   run_sapi_deactivate, zend_chuid_globals, chuid_globals)
-	STD_PHP_INI_ENTRY("chuid.force_gid",                     "-1",    PHP_INI_SYSTEM,             OnUpdateLong,   forced_gid,          zend_chuid_globals, chuid_globals)
 PHP_INI_END()
 
 #undef CHUID_INI_SYSTEM_OR_PERDIR
@@ -95,7 +93,6 @@ PHP_INI_END()
 static PHP_MINIT_FUNCTION(chuid)
 {
 	int can_chroot = -1;
-	long int forced_gid;
 	zend_bool no_gid;
 	zend_bool need_chroot;
 	char* global_chroot;
@@ -124,8 +121,7 @@ static PHP_MINIT_FUNCTION(chuid)
 		zend_llist_add_element(&zend_extensions, &extension);
 	}
 
-	forced_gid = CHUID_G(forced_gid);
-	no_gid     = CHUID_G(no_set_gid);
+	no_gid = CHUID_G(no_set_gid);
 
 	disable_posix_setuids(TSRMLS_C);
 
@@ -192,18 +188,11 @@ static PHP_MINIT_FUNCTION(chuid)
 		int num_caps = 0;
 		cap_value_t caps[5];
 
-		if (forced_gid > 0) {
-			if (0 != setgid((gid_t)forced_gid)) {
-				zend_error(E_CORE_ERROR, "setgid(%ld) failed", forced_gid);
-				return FAILURE;
-			}
-		}
-
 		if (sapi_is_cli || sapi_is_cgi) {
-			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setxid : cxm_setuid;
+			CHUID_G(mode) = (0 == no_gid) ? cxm_setxid : cxm_setuid;
 		}
 		else {
-			CHUID_G(mode) = (forced_gid < 1 && 0 == no_gid) ? cxm_setresxid : cxm_setresuid;
+			CHUID_G(mode) = (0 == no_gid) ? cxm_setresxid : cxm_setresuid;
 		}
 
 #if defined(WITH_CAP_LIBRARY) || defined(WITH_CAPNG_LIBRARY)
@@ -212,7 +201,7 @@ static PHP_MINIT_FUNCTION(chuid)
 			++num_caps;
 		}
 
-		if (forced_gid < 1 && 0 == no_gid) {
+		if (0 == no_gid) {
 			caps[num_caps] = CAP_SETGID;
 			++num_caps;
 		}
