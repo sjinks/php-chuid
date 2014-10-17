@@ -1,9 +1,9 @@
 Source: php-chuid
 Section: php
 Priority: optional
-Maintainer: Vladimir Kolesnikov <vladimir@free-sevastopol.com>
+Maintainer: Volodymyr Kolesnykov <volodymyr@wildwolf.name>
 Build-Depends: debhelper (>= 9), php5-dev, libcap-dev
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Vcs-Git: git://github.com/sjinks/php-chuid.git
 Vcs-Browser: https://github.com/sjinks/php-chuid
 
