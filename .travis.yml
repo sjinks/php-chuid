@@ -1,12 +1,8 @@
 language:
   - php
-  - c
 
 php:
   - 5.6
-
-compiler:
-  - gcc
 
 install:
   - sudo apt-get -qq install libcap-dev libcap-ng-dev
@@ -14,9 +10,6 @@ install:
 env:
   global:
    - secure: "pIwolzC0BBt15LmwOULzFrLvBURUs7fiL/lFQZSnFaOkWNAYwLbrPjmtWQjc3yyUOSURXfVQcFgPO74s3zEciWExl02QWXSsxTcQZhdmuR/Ulssk21wjWlO8zeCaAgb1fwebVjpkSf+UhUZ3dx2UNFO3RM5xJXb6TQTLRHfDPAA="
-  matrix:
-    - CAP="--with-cap" CAPNG="--without-capng"
-    - CAP="--without-cap" CAPNG="--with-capng"
 
 addons:
   coverity_scan:
@@ -24,11 +17,10 @@ addons:
       name: "sjinks/php-chuid"
       description: "php-chuid"
     notification_email: volodymyr@wildwolf.name
-    build_command_prepend: "phpize && ./configure $CAP $CAPNG --silent"
+    build_command_prepend: "phpize && ./configure --with-cap --silent"
     build_command: "make --silent"
     branch_pattern: coverity
 
 script:
   - phpize && ./configure $CAP $CAPNG --silent && make --silent
   - sudo sh -c "NO_INTERACTION=1 make test"
-
