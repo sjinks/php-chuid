@@ -270,7 +270,7 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 
 		value = zend_hash_str_find(Z_ARRVAL(server), ZEND_STRL("DOCUMENT_ROOT"));
 		if (value && Z_TYPE_P(value) == IS_STRING) {
-			docroot = Z_STRVAL_PP(value);
+			docroot = Z_STRVAL_P(value);
 		}
 
 		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
