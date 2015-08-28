@@ -10,6 +10,10 @@
 #include "helpers.h"
 #include "caps.h"
 
+#if PHP_MAJOR_VERSION >= 7
+#	include <Zend/zend_string.h>
+#endif
+
 int sapi_is_cli       = -1; /**< Whether SAPI is CLI */
 int sapi_is_cgi       = -1; /**< Whether SAPI is CGI */
 #ifdef ZTS
@@ -260,12 +264,12 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 #if PHP_MAJOR_VERSION >= 7
 		zval* value;
 		zval old_server = PG(http_globals)[TRACK_VARS_SERVER];
-		unsigned int (*orig_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = sapi_module.input_filter;
+		unsigned int (*orig_input_filter)(int, char*, char**, size_t, size_t*) = sapi_module.input_filter;
 		sapi_module.input_filter = dummy_input_filter;
 
 		array_init(&server);
 		PG(http_globals)[TRACK_VARS_SERVER] = server;
-		sapi_module.register_server_variables(server TSRMLS_CC);
+		sapi_module.register_server_variables(&server);
 		sapi_module.input_filter = orig_input_filter;
 
 		value = zend_hash_str_find(Z_ARRVAL(server), ZEND_STRL("DOCUMENT_ROOT"));
