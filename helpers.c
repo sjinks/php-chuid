@@ -26,7 +26,9 @@ HashTable blacklisted_functions;
  * @brief Saved @c zend_execute_internal()
  * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
  */
-#if PHP_VERSION_ID >= 50500
+#if PHP_VERSION_ID >= 70000
+void (*old_execute_internal)(zend_execute_data*, zval* TSRMLS_DC);
+#elif PHP_VERSION_ID >= 50500
 void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #else
 void (*old_execute_internal)(zend_execute_data*, int TSRMLS_DC);
@@ -42,6 +44,15 @@ uid_t uid_nobody = 65534;
  */
 gid_t gid_nogroup = 65534;
 
+static inline void chuid_ptr_dtor(zval** v)
+{
+#if PHP_MAJOR_VERSION >= 7
+	zval_ptr_dtor(*v);
+#else
+	zval_ptr_dtor(v);
+#endif
+}
+
 /**
  * @brief Function execution handler
  * @param execute_data_ptr Zend Execute Data
@@ -49,10 +60,15 @@ gid_t gid_nogroup = 65534;
  */
 static void chuid_execute_internal(
 	zend_execute_data* execute_data_ptr,
-#if PHP_VERSION_ID >= 50500
+#if PHP_VERSION_ID >= 70000
+	zval* return_value
+#else
+#  if PHP_VERSION_ID >= 50500
 	zend_fcall_info* fci,
+#  endif
+	int return_value_used
 #endif
-	int return_value_used TSRMLS_DC
+	TSRMLS_DC
 )
 {
 #if PHP_VERSION_ID >= 50300
@@ -75,7 +91,9 @@ static void chuid_execute_internal(
 		}
 	}
 
-#if PHP_VERSION_ID >= 50500
+#if PHP_VERSION_ID >= 70000
+	old_execute_internal(execute_data_ptr, return_value TSRMLS_CC);
+#elif PHP_VERSION_ID >= 50500
 	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
 #else
 	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
@@ -111,8 +129,22 @@ int my_setgids(gid_t rgid, gid_t egid, enum change_xid_mode_t mode)
 void disable_posix_setuids(TSRMLS_D)
 {
 	if (0 != CHUID_G(disable_setuid)) {
+#if PHP_MAJOR_VERSION >= 7
+		zval dummy;
+		ZVAL_LONG(&dummy, 1);
+#else
 		unsigned long int dummy = 0;
+#endif
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
+#if PHP_MAJOR_VERSION >= 7
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setegid"),     &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_seteuid"),     &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setgid"),      &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setuid"),      &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("pcntl_setpriority"), &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_kill"),        &dummy);
+		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("proc_nice"),         &dummy);
+#else
 		zend_hash_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid"),      &dummy, sizeof(dummy), NULL);
@@ -120,6 +152,7 @@ void disable_posix_setuids(TSRMLS_D)
 		zend_hash_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy, sizeof(dummy), NULL);
+#endif
 
 		old_execute_internal = zend_execute_internal;
 		if (NULL == old_execute_internal) {
@@ -241,7 +274,7 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	if (NULL == docroot) {
 		PHPCHUID_ERROR(E_WARNING, "%s", "Cannot get DOCUMENT_ROOT");
 		if (server) {
-			zval_ptr_dtor(&server);
+			chuid_ptr_dtor(&server);
 		}
 
 		return;
@@ -253,14 +286,14 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
 		if (server) {
-			zval_ptr_dtor(&server);
+			chuid_ptr_dtor(&server);
 		}
 
 		return;
 	}
 
 	if (server) {
-		zval_ptr_dtor(&server);
+		chuid_ptr_dtor(&server);
 	}
 
 	if (CHUID_G(never_root)) {
@@ -320,4 +353,16 @@ void deactivate(TSRMLS_D)
 			}
 		}
 	}
+}
+
+zend_bool chuid_is_auto_global(const char* name, size_t len TSRMLS_DC)
+{
+#if PHP_MAJOR_VERSION >= 7
+	zend_string* n = STR_INIT(name, len, 0);
+	zend_bool res  = zend_is_auto_global(n TSRMLS_CC);
+	STR_RELEASE(n);
+	return res;
+#else
+	return zend_is_auto_global(name, len TSRMLS_CC);
+#endif
 }
