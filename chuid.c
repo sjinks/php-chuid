@@ -292,7 +292,7 @@ static PHP_RINIT_FUNCTION(chuid)
 					SEPARATE_ZVAL(var);
 					memmove(Z_STRVAL_P(var), Z_STRVAL_P(var)+len, Z_STRLEN_P(var)-len+1);
 					Z_STRLEN_P(var) -= len;
-					zend_string_forget_hash_val((Z_STR_P(var));
+					zend_string_forget_hash_val(Z_STR_P(var));
 				}
 			}
 
@@ -302,7 +302,7 @@ static PHP_RINIT_FUNCTION(chuid)
 					SEPARATE_ZVAL(var);
 					memmove(Z_STRVAL_P(var), Z_STRVAL_P(var)+len, Z_STRLEN_P(var)-len+1);
 					Z_STRLEN_P(var) -= len;
-					zend_string_forget_hash_val((Z_STR_P(var));
+					zend_string_forget_hash_val(Z_STR_P(var));
 				}
 			}
 		}
@@ -335,7 +335,7 @@ static PHP_RINIT_FUNCTION(chuid)
 					SEPARATE_ZVAL(var);
 					memmove(Z_STRVAL_P(var), Z_STRVAL_P(var)+len, Z_STRLEN_P(var)-len+1);
 					Z_STRLEN_P(var) -= len;
-					zend_string_forget_hash_val((Z_STR_P(var));
+					zend_string_forget_hash_val(Z_STR_P(var));
 				}
 			}
 
@@ -345,7 +345,7 @@ static PHP_RINIT_FUNCTION(chuid)
 					SEPARATE_ZVAL(var);
 					memmove(Z_STRVAL_P(var), Z_STRVAL_P(var)+len, Z_STRLEN_P(var)-len+1);
 					Z_STRLEN_P(var) -= len;
-					zend_string_forget_hash_val((Z_STR_P(var));
+					zend_string_forget_hash_val(Z_STR_P(var));
 				}
 			}
 		}
