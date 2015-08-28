@@ -286,7 +286,7 @@ static PHP_RINIT_FUNCTION(chuid)
 #if PHP_MAJOR_VERSION >= 7
 		if (Z_TYPE(http_globals[TRACK_VARS_SERVER]) == IS_ARRAY) {
 			zval* var;
-			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_SERVER]), ZEND_STRS("DOCUMENT_ROOT"));
+			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_SERVER]), ZEND_STRL("DOCUMENT_ROOT"));
 			if (var && Z_TYPE_P(var) == IS_STRING) {
 				if (!strncmp(Z_STRVAL_P(var), root, len)) {
 					SEPARATE_ZVAL(var);
@@ -296,7 +296,7 @@ static PHP_RINIT_FUNCTION(chuid)
 				}
 			}
 
-			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_SERVER]), ZEND_STRS("SCRIPT_FILENAME"));
+			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_SERVER]), ZEND_STRL("SCRIPT_FILENAME"));
 			if (var && Z_TYPE_P(var) == IS_STRING) {
 				if (!strncmp(Z_STRVAL_P(var), root, len)) {
 					SEPARATE_ZVAL(var);
@@ -329,7 +329,7 @@ static PHP_RINIT_FUNCTION(chuid)
 #if PHP_MAJOR_VERSION >= 7
 		if (Z_TYPE(http_globals[TRACK_VARS_SERVER]) == IS_ARRAY) {
 			zval* var;
-			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_ENV]), ZEND_STRS("DOCUMENT_ROOT"));
+			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_ENV]), ZEND_STRL("DOCUMENT_ROOT"));
 			if (var && Z_TYPE_P(var) == IS_STRING) {
 				if (!strncmp(Z_STRVAL_P(var), root, len)) {
 					SEPARATE_ZVAL(var);
@@ -339,7 +339,7 @@ static PHP_RINIT_FUNCTION(chuid)
 				}
 			}
 
-			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_ENV]), ZEND_STRS("SCRIPT_FILENAME"));
+			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_ENV]), ZEND_STRL("SCRIPT_FILENAME"));
 			if (var && Z_TYPE_P(var) == IS_STRING) {
 				if (!strncmp(Z_STRVAL_P(var), root, len)) {
 					SEPARATE_ZVAL(var);

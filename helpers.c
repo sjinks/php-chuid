@@ -44,15 +44,6 @@ uid_t uid_nobody = 65534;
  */
 gid_t gid_nogroup = 65534;
 
-static inline void chuid_ptr_dtor(zval** v)
-{
-#if PHP_MAJOR_VERSION >= 7
-	zval_ptr_dtor(*v);
-#else
-	zval_ptr_dtor(v);
-#endif
-}
-
 /**
  * @brief Function execution handler
  * @param execute_data_ptr Zend Execute Data
@@ -72,8 +63,8 @@ static void chuid_execute_internal(
 )
 {
 #if PHP_MAJOR_VERSION >= 7
-	zend_string* fname   = execute_data_ptr->func->function_name;
-	zend_class_entry* ce = execute_data_ptr->func->scope;
+	zend_string* fname   = execute_data_ptr->func->common.function_name;
+	zend_class_entry* ce = execute_data_ptr->func->common.scope;
 #else
 #  if PHP_VERSION_ID >= 50300
 	const
@@ -146,13 +137,13 @@ void disable_posix_setuids(TSRMLS_D)
 #endif
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
 #if PHP_MAJOR_VERSION >= 7
-		zend_hash_str_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy);
-		zend_hash_str_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy);
-		zend_hash_str_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid"),      &dummy);
-		zend_hash_str_add(&blacklisted_functions, "posix_setuid",      sizeof("posix_setuid"),      &dummy);
-		zend_hash_str_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy);
-		zend_hash_str_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy);
-		zend_hash_str_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid")-1,     &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid")-1,     &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid")-1,      &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setuid",      sizeof("posix_setuid")-1,      &dummy);
+		zend_hash_str_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority")-1, &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill")-1,        &dummy);
+		zend_hash_str_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice")-1,         &dummy);
 #else
 		zend_hash_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy, sizeof(dummy), NULL);
@@ -240,10 +231,18 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	char* docroot_corrected;
 	int res;
 	struct stat statbuf;
+#if PHP_MAJOR_VERSION >= 7
+	zval server;
+#else
 	zval* server = NULL;
+#endif
 
 	assert(uid != NULL);
 	assert(gid != NULL);
+
+#if PHP_MAJOR_VERSION >= 7
+	ZVAL_UNDEF(&server);
+#endif
 
 	*gid = (gid_t)CHUID_G(default_gid);
 	*uid = (uid_t)CHUID_G(default_uid);
@@ -258,6 +257,24 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	}
 
 	if (NULL == docroot && NULL != sapi_module.register_server_variables) {
+#if PHP_MAJOR_VERSION >= 7
+		zval* value;
+		zval old_server = PG(http_globals)[TRACK_VARS_SERVER];
+		unsigned int (*orig_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = sapi_module.input_filter;
+		sapi_module.input_filter = dummy_input_filter;
+
+		array_init(&server);
+		PG(http_globals)[TRACK_VARS_SERVER] = server;
+		sapi_module.register_server_variables(server TSRMLS_CC);
+		sapi_module.input_filter = orig_input_filter;
+
+		value = zend_hash_str_find(Z_ARRVAL(server), ZEND_STRL("DOCUMENT_ROOT"));
+		if (value && Z_TYPE_P(value) == IS_STRING) {
+			docroot = Z_STRVAL_PP(value);
+		}
+
+		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
+#else
 		zval** value;
 		zval* old_server = PG(http_globals)[TRACK_VARS_SERVER];
 		unsigned int (*orig_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = sapi_module.input_filter;
@@ -278,13 +295,19 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 		}
 
 		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
+#endif
 	}
 
 	if (NULL == docroot) {
 		PHPCHUID_ERROR(E_WARNING, "%s", "Cannot get DOCUMENT_ROOT");
+
+#if PHP_MAJOR_VERSION >= 7
+		zval_ptr_dtor(&server);
+#else
 		if (server) {
-			chuid_ptr_dtor(&server);
+			zval_ptr_dtor(&server);
 		}
+#endif
 
 		return;
 	}
@@ -294,16 +317,25 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	res = stat(docroot_corrected, &statbuf);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
+
+#if PHP_MAJOR_VERSION >= 7
+		zval_ptr_dtor(&server);
+#else
 		if (server) {
-			chuid_ptr_dtor(&server);
+			zval_ptr_dtor(&server);
 		}
+#endif
 
 		return;
 	}
 
+#if PHP_MAJOR_VERSION >= 7
+	zval_ptr_dtor(&server);
+#else
 	if (server) {
-		chuid_ptr_dtor(&server);
+		zval_ptr_dtor(&server);
 	}
+#endif
 
 	if (CHUID_G(never_root)) {
 		if (0 != statbuf.st_uid) {
