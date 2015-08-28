@@ -48,6 +48,7 @@
 
 #if PHP_MAJOR_VERSION >= 7
 #	include <Zend/zend_string.h>
+test
 #endif
 
 #ifdef HAVE_UNISTD_H

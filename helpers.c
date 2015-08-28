@@ -71,17 +71,26 @@ static void chuid_execute_internal(
 	TSRMLS_DC
 )
 {
-#if PHP_VERSION_ID >= 50300
+#if PHP_MAJOR_VERSION >= 7
+	zend_string* fname   = execute_data_ptr->func->function_name;
+	zend_class_entry* ce = execute_data_ptr->func->scope;
+#else
+#  if PHP_VERSION_ID >= 50300
 	const
-#endif
-	char* lcname = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len = strlen(lcname);
-
+#  endif
+	char* lcname         = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
+	size_t lcname_len    = strlen(lcname);
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
+#endif
 
 	if (NULL == ce) {
 		if (0 != CHUID_G(disable_setuid)) {
-			int res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+			int res;
+#if PHP_MAJOR_VERSION >= 7
+			res = zend_hash_exists(&blacklisted_functions, fname);
+#else
+			res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+#endif
 
 			if (0 != res) {
 				zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
@@ -137,13 +146,13 @@ void disable_posix_setuids(TSRMLS_D)
 #endif
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
 #if PHP_MAJOR_VERSION >= 7
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setegid"),     &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_seteuid"),     &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setgid"),      &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_setuid"),      &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("pcntl_setpriority"), &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("posix_kill"),        &dummy);
-		zend_hash_str_add(&blacklisted_functions, ZEND_STRS("proc_nice"),         &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid"),      &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_setuid",      sizeof("posix_setuid"),      &dummy);
+		zend_hash_str_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy);
+		zend_hash_str_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy);
+		zend_hash_str_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy);
 #else
 		zend_hash_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy, sizeof(dummy), NULL);
 		zend_hash_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy, sizeof(dummy), NULL);
