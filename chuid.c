@@ -156,10 +156,10 @@ static PHP_MINIT_FUNCTION(chuid)
 			"/",
 			O_RDONLY
 #		ifdef O_CLOEXEC
-			|| O_CLOEXEC
+			| O_CLOEXEC
 #		endif
 #		ifdef O_DIRECTORY
-			|| O_DIRECTORY
+			| O_DIRECTORY
 #		endif
 		);
 
