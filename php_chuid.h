@@ -18,7 +18,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "0.6.0"
+#define PHP_CHUID_EXTVER    "0.6.1"
 
 /**
  * @headerfile php_chuid.h
@@ -35,7 +35,7 @@
 /**
  * @headerfile php_chuid.h
  */
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2014"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2016"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
@@ -120,10 +120,8 @@ PHPCHUID_VISIBILITY_HIDDEN extern gid_t gid_nogroup;
 
 #if PHP_VERSION_ID >= 70000
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zval* TSRMLS_DC);
-#elif PHP_VERSION_ID >= 50500
-PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #else
-PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, int TSRMLS_DC);
+PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #endif
 
 /**

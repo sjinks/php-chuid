@@ -32,10 +32,8 @@ HashTable blacklisted_functions;
  */
 #if PHP_VERSION_ID >= 70000
 void (*old_execute_internal)(zend_execute_data*, zval* TSRMLS_DC);
-#elif PHP_VERSION_ID >= 50500
-void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #else
-void (*old_execute_internal)(zend_execute_data*, int TSRMLS_DC);
+void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #endif
 
 /**
@@ -58,9 +56,7 @@ static void chuid_execute_internal(
 #if PHP_VERSION_ID >= 70000
 	zval* return_value
 #else
-#  if PHP_VERSION_ID >= 50500
 	zend_fcall_info* fci,
-#  endif
 	int return_value_used
 #endif
 	TSRMLS_DC
@@ -70,10 +66,7 @@ static void chuid_execute_internal(
 	zend_string* fname   = execute_data_ptr->func->common.function_name;
 	zend_class_entry* ce = execute_data_ptr->func->common.scope;
 #else
-#  if PHP_VERSION_ID >= 50300
-	const
-#  endif
-	char* lcname         = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
+	const char* lcname   = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
 	size_t lcname_len    = strlen(lcname);
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
 #endif
@@ -97,10 +90,8 @@ static void chuid_execute_internal(
 
 #if PHP_VERSION_ID >= 70000
 	old_execute_internal(execute_data_ptr, return_value TSRMLS_CC);
-#elif PHP_VERSION_ID >= 50500
-	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
 #else
-	old_execute_internal(execute_data_ptr, return_value_used TSRMLS_CC);
+	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
 #endif
 }
 
