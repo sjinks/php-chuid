@@ -18,7 +18,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "0.6.1"
+#define PHP_CHUID_EXTVER    "0.6.2"
 
 /**
  * @headerfile php_chuid.h
