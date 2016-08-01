@@ -395,9 +395,9 @@ void deactivate(TSRMLS_D)
 zend_bool chuid_is_auto_global(const char* name, size_t len TSRMLS_DC)
 {
 #if PHP_MAJOR_VERSION >= 7
-	zend_string* n = STR_INIT(name, len, 0);
+	zend_string* n = zend_string_init(name, len, 0);
 	zend_bool res  = zend_is_auto_global(n TSRMLS_CC);
-	STR_RELEASE(n);
+	zend_string_release(n);
 	return res;
 #else
 	return zend_is_auto_global(name, len TSRMLS_CC);
