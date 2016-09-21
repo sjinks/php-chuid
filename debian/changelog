@@ -7,7 +7,7 @@ php-chuid (0.6.0) trusty; urgency=low
   * Added tests
   * Fixed memory leaks on errors
   * Refactoring
-  * Absense of capabilities generates only E_CORE_WARNING
+  * Absence of capabilities generates only E_CORE_WARNING
   * Dropped force_gid feature
 
  -- Volodymyr Kolesnykov <volodymyr@wildwolf.name>  Fri, 17 Oct 2014 08:05:00 +0300

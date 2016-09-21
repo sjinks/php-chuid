@@ -69,4 +69,9 @@ PHPCHUID_VISIBILITY_HIDDEN void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_
  */
 PHPCHUID_VISIBILITY_HIDDEN void deactivate(TSRMLS_D);
 
+
+
+
+PHPCHUID_VISIBILITY_HIDDEN zend_bool chuid_is_auto_global(const char* name, size_t len TSRMLS_DC);
+
 #endif /* PHPCHUID_HELPERS_H_ */
