@@ -67,24 +67,22 @@ static void chuid_execute_internal(
 	zend_class_entry* ce = execute_data_ptr->func->common.scope;
 #else
 	const char* lcname   = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len    = strlen(lcname);
+	size_t lcname_len    = lcname ? strlen(lcname) : 0;
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
 #endif
 
-	if (NULL == ce) {
-		if (0 != CHUID_G(disable_setuid)) {
-			int res;
+	if (NULL == ce && 0 != CHUID_G(disable_setuid)) {
+		int res;
 #if PHP_MAJOR_VERSION >= 7
-			res = zend_hash_exists(&blacklisted_functions, fname);
+		res = fname ? zend_hash_exists(&blacklisted_functions, fname) : 0;
 #else
-			res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+		res = lcname ? zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1) : 0;
 #endif
 
-			if (0 != res) {
-				zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
-				zend_bailout();
-				return;
-			}
+		if (0 != res) {
+			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+			zend_bailout();
+			return;
 		}
 	}
 
