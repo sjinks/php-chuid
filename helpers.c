@@ -67,24 +67,22 @@ static void chuid_execute_internal(
 	zend_class_entry* ce = execute_data_ptr->func->common.scope;
 #else
 	const char* lcname   = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len    = strlen(lcname);
+	size_t lcname_len    = lcname ? strlen(lcname) : 0;
 	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
 #endif
 
-	if (NULL == ce) {
-		if (0 != CHUID_G(disable_setuid)) {
-			int res;
+	if (NULL == ce && 0 != CHUID_G(disable_setuid)) {
+		int res;
 #if PHP_MAJOR_VERSION >= 7
-			res = zend_hash_exists(&blacklisted_functions, fname);
+		res = fname ? zend_hash_exists(&blacklisted_functions, fname) : 0;
 #else
-			res = zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1);
+		res = lcname ? zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1) : 0;
 #endif
 
-			if (0 != res) {
-				zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
-				zend_bailout();
-				return;
-			}
+		if (0 != res) {
+			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+			zend_bailout();
+			return;
 		}
 	}
 
@@ -186,14 +184,15 @@ int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
 	PHPCHUID_DEBUG("set_guids: mode=%d, uid=%d, gid=%d\n", (int)mode, (int)uid, (int)gid);
 
 	if (cxm_setresxid == mode || cxm_setxid == mode) {
+		res = setgroups(0, NULL);
+		if (0 != res) {
+			PHPCHUID_ERROR(E_CORE_WARNING, "Failed to clear the list of supplementary groups: %s", strerror(errno));
+		}
+
 		res = my_setgids(gid, gid, mode);
 		if (0 != res) {
 			PHPCHUID_ERROR(E_CORE_ERROR, "my_setgids(%d, %d, %d): %s", gid, gid, (int)mode, strerror(errno));
 			return FAILURE;
-		}
-
-		if (setgroups(0, NULL)) {
-			PHPCHUID_ERROR(E_CORE_WARNING, "Failed to clear the list of supplementary groups: %s", strerror(errno));
 		}
 	}
 
@@ -394,9 +393,9 @@ void deactivate(TSRMLS_D)
 zend_bool chuid_is_auto_global(const char* name, size_t len TSRMLS_DC)
 {
 #if PHP_MAJOR_VERSION >= 7
-	zend_string* n = STR_INIT(name, len, 0);
+	zend_string* n = zend_string_init(name, len, 0);
 	zend_bool res  = zend_is_auto_global(n TSRMLS_CC);
-	STR_RELEASE(n);
+	zend_string_release(n);
 	return res;
 #else
 	return zend_is_auto_global(name, len TSRMLS_CC);
