@@ -31,7 +31,7 @@ HashTable blacklisted_functions;
  * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
  */
 #if PHP_VERSION_ID >= 70000
-void (*old_execute_internal)(zend_execute_data*, zval* TSRMLS_DC);
+void (*old_execute_internal)(zend_execute_data*, zval*);
 #else
 void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #endif
@@ -58,8 +58,8 @@ static void chuid_execute_internal(
 #else
 	zend_fcall_info* fci,
 	int return_value_used
-#endif
 	TSRMLS_DC
+#endif
 )
 {
 #if PHP_MAJOR_VERSION >= 7
@@ -87,7 +87,7 @@ static void chuid_execute_internal(
 	}
 
 #if PHP_VERSION_ID >= 70000
-	old_execute_internal(execute_data_ptr, return_value TSRMLS_CC);
+	old_execute_internal(execute_data_ptr, return_value);
 #else
 	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
 #endif

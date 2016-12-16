@@ -119,7 +119,7 @@ PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;
 PHPCHUID_VISIBILITY_HIDDEN extern gid_t gid_nogroup;
 
 #if PHP_VERSION_ID >= 70000
-PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zval* TSRMLS_DC);
+PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zval*);
 #else
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
 #endif
