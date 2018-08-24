@@ -18,5 +18,6 @@ env:
     - CAP="--without-cap" CAPNG="--with-capng"
 
 script:
+  - cd chuid
   - phpize && ./configure $CAP $CAPNG --silent && make --silent
   - sudo sh -c "NO_INTERACTION=1 make test"
