@@ -1,39 +1,51 @@
 #!/usr/bin/make -f
+
 #export DH_VERBOSE=1
 
-CFLAGS  += -g3
-LDFLAGS += -Wl,--as-needed -Wl,-O1
+PHP_VERSIONS   := $(shell /usr/sbin/phpquery -V)
+PKG_SOURCE_DIR := chuid
+INSTALL_ROOT    = $(CURDIR)/debian/php-chuid
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -fomit-frame-pointer
-endif
+CONFIGURE_TARGETS = $(addprefix configure-,$(addsuffix -stamp,$(PHP_VERSIONS)))
+BUILD_TARGETS     = $(addprefix build-,$(addsuffix -stamp,$(PHP_VERSIONS)))
+INSTALL_TARGETS   = $(addprefix install-,$(addsuffix -stamp,$(PHP_VERSIONS)))
+CLEAN_TARGETS     = $(addprefix clean-,$(addsuffix -stamp,$(PHP_VERSIONS)))
 
 %:
-	dh $@
+	dh $@ --with php
 
-override_dh_auto_configure:
-	phpize5
-	dh_auto_configure -- \
-		--enable-chuid=shared \
-		--with-cap
+override_dh_auto_configure: $(CONFIGURE_TARGETS)
+override_dh_auto_build: $(BUILD_TARGETS)
+override_dh_auto_install: $(INSTALL_TARGETS)
+override_dh_auto_clean: $(CLEAN_TARGETS)
+	-rm -f $(CONFIGURE_TARGETS) $(BUILD_TARGETS) $(INSTALL_TARGETS) $(CLEAN_TARGETS) debian/chuid.ini
 
-override_dh_auto_build:
-	dh_auto_build
-	sed "s#@EXTDIR@#`php-config5 --extension-dir`#" debian/chuid.ini.in > debian/chuid.ini
+clean-%-stamp: SOURCE_DIR = build-$(*)
+clean-%-stamp:
+	rm -rf $(SOURCE_DIR)
+	touch clean-$*-stamp
 
-override_dh_auto_clean:
-	dh_auto_clean
-	phpize5 --clean
-	-rm -rf debian/chuid.ini tmp-php.ini
+configure-%-stamp: SOURCE_DIR = build-$(*)
+configure-%-stamp:
+	cp -a $(PKG_SOURCE_DIR) $(SOURCE_DIR)
+	cd $(SOURCE_DIR) && phpize$(*)
+	dh_auto_configure --sourcedirectory=$(SOURCE_DIR) -- --enable-chuid --with-php-config=/usr/bin/php-config$* --with-cap
+	touch configure-$(*)-stamp
 
-override_dh_auto_install:
-	$(MAKE) install INSTALL_ROOT=debian/php5-chuid
+build-%-stamp: SOURCE_DIR = build-$(*)
+build-%-stamp:
+	dh_auto_build --sourcedirectory=$(SOURCE_DIR)
+	sed "s#@EXTDIR@#`php-config$* --extension-dir`#" debian/chuid.ini.in > debian/chuid.ini
+	touch build-$*-stamp
 
-override_dh_strip:
-	dh_strip -s --dbg-package=php5-chuid-dbg
+install-%-stamp: SOURCE_DIR = build-$(*)
+install-%-stamp:
+	dh_auto_install --sourcedirectory=$(SOURCE_DIR) -- INSTALL_ROOT=$(INSTALL_ROOT)
+	touch install-$*-stamp
 
+override_dh_gencontrol: ,:=,
 override_dh_gencontrol:
-	echo "php:Depends=phpapi-`php-config5 --phpapi`" >> debian/php5-chuid.substvars
-	dh_gencontrol
+	dh_gencontrol -- "-Vphp:Provides=$(addprefix php,$(addsuffix -$(PECL_NAME)$(,) ,$(DH_PHP_VERSIONS)))"
+
+override_dh_php:
+	dh_php -p php-chuid

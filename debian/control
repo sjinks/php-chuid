@@ -2,35 +2,21 @@ Source: php-chuid
 Section: php
 Priority: optional
 Maintainer: Volodymyr Kolesnykov <volodymyr@wildwolf.name>
-Build-Depends: debhelper (>= 9), php5-dev, libcap-dev
-Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 9), dh-php (>= 0.12~), php-all-dev, libcap-dev
+Standards-Version: 4.1.4
 Vcs-Git: git://github.com/sjinks/php-chuid.git
 Vcs-Browser: https://github.com/sjinks/php-chuid
 
-Package: php5-chuid
+Package: php-chuid
 Architecture: any
 Depends: ${shlibs:Depends}, ${php:Depends}, ${misc:Depends}
+Provides: ${php:Provides}
 Description: Runs PHP as the owner of DocumentRoot
  php-chuid allows one to run PHP CLI/CGI/FastCGI as the owner of the
  DocumentRoot changing UID/GID upon request start and reverting
  to the original UID/GID when the request finishes.
  .
- PHP5 is an HTML-embedded scripting language. Much of its syntax is borrowed
+ PHP7 is an HTML-embedded scripting language. Much of its syntax is borrowed
  from C, Java and Perl with a couple of unique PHP-specific features thrown
  in. The goal of the language is to allow web developers to write
  dynamically generated pages quickly.
-
-Package: php5-chuid-dbg
-Depends: ${misc:Depends}, php5-chuid (= ${binary:Version})
-Recommends: gdb
-Section: debug
-Priority: extra
-Architecture: any
-Description: Debug symbols for php5-chuid
- This package provides the debug symbols for php5-chuid needed for properly
- debugging errors with gdb.
- .
- PHP5 is an HTML-embedded scripting language. Much of its syntax is borrowed
- from C, Java and Perl with a couple of unique PHP-specific features thrown
- in. The goal of the language is to allow web developers to write dynamically
- generated pages quickly.
