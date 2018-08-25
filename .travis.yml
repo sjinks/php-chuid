@@ -19,8 +19,7 @@ env:
 script:
   - cd chuid
   - phpize && ./configure $CAP $CAPNG --silent && make --silent
-  - sudo sh -c "NO_INTERACTION=1 make test"
+  - sudo sh -c "NO_INTERACTION=1 PHP_TEST_SETTINGS='-d chuid.never_root=0' make test"
 
 after_failure:
-  - pwd
-  - cat chuid/tests/*.log tests/*.log
+  - cat tests/*.log
