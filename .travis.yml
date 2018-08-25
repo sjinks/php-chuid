@@ -22,4 +22,5 @@ script:
   - sudo sh -c "NO_INTERACTION=1 make test"
 
 after_failure:
-  - cat chuid/tests/*.log
+  - pwd
+  - cat chuid/tests/*.log tests/*.log
