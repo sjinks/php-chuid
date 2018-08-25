@@ -389,8 +389,8 @@ static PHP_GINIT_FUNCTION(chuid)
 	assert(-1 == sapi_is_cli);
 	assert(-1 == sapi_is_cgi);
 
-	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli"));
-	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi")) ;
+	sapi_is_cli = (0 == strcmp(sapi_module.name, "cli")) || (0 == strcmp(sapi_module.name, "phpdbg"));
+	sapi_is_cgi = (0 == strcmp(sapi_module.name, "cgi"));
 
 #ifdef ZTS
 	sapi_is_supported =
