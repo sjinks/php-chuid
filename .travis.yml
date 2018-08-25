@@ -20,3 +20,6 @@ script:
   - cd chuid
   - phpize && ./configure $CAP $CAPNG --silent && make --silent
   - sudo sh -c "NO_INTERACTION=1 make test"
+
+after_failure:
+  - cat chuid/tests/*.log
