@@ -123,7 +123,7 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	no_gid = CHUID_G(no_set_gid);
 
-	disable_posix_setuids(TSRMLS_C);
+	disable_posix_setuids();
 
 	if (!sapi_is_cli || !CHUID_G(cli_disable)) {
 		int can_setgid = -1;
@@ -179,7 +179,7 @@ static PHP_MINIT_FUNCTION(chuid)
 
 	PHPCHUID_DEBUG("Global chroot: %s\nPer-request chroot: %s\n", global_chroot, need_chroot && !global_chroot ? "enabled" : "disabled");
 
-	if (global_chroot && FAILURE == do_chroot(global_chroot TSRMLS_CC)) {
+	if (global_chroot && FAILURE == do_chroot(global_chroot)) {
 		return FAILURE;
 	}
 
@@ -268,22 +268,17 @@ static PHP_RINIT_FUNCTION(chuid)
 	PHPCHUID_DEBUG("%s\n", "PHP_RINIT(chuid)");
 
 	if (CHUID_G(chrooted)) {
-#if PHP_MAJOR_VERSION >= 7
 		zval* http_globals;
-#else
-		zval** http_globals;
-#endif
 
 		http_globals = PG(http_globals);
 		char* root   = CHUID_G(req_chroot);
 		size_t len   = strlen(root);
 
 		if (PG(auto_globals_jit)) {
-			chuid_is_auto_global("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
-			chuid_is_auto_global("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
+			chuid_is_auto_global("_SERVER", sizeof("_SERVER")-1);
+			chuid_is_auto_global("_ENV", sizeof("_ENV")-1);
 		}
 
-#if PHP_MAJOR_VERSION >= 7
 		if (Z_TYPE(http_globals[TRACK_VARS_SERVER]) == IS_ARRAY) {
 			zval* var;
 			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_SERVER]), ZEND_STRL("DOCUMENT_ROOT"));
@@ -306,27 +301,8 @@ static PHP_RINIT_FUNCTION(chuid)
 				}
 			}
 		}
-#else
-		if (http_globals[TRACK_VARS_SERVER]) {
-			zval** var;
-			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var) && IS_STRING == Z_TYPE_PP(var)) {
-				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
-					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
-					Z_STRLEN_PP(var) -= len;
-				}
-			}
-
-			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_SERVER]->value.ht, "SCRIPT_FILENAME", sizeof("SCRIPT_FILENAME"), (void **)&var) && IS_STRING == Z_TYPE_PP(var)) {
-				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
-					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
-					Z_STRLEN_PP(var) -= len;
-				}
-			}
-		}
-#endif
 
 		/* This is probably not needed — updating $_SERVER seems to update $_ENV as well. But I want to be safe. */
-#if PHP_MAJOR_VERSION >= 7
 		if (Z_TYPE(http_globals[TRACK_VARS_SERVER]) == IS_ARRAY) {
 			zval* var;
 			var = zend_hash_str_find(Z_ARRVAL(http_globals[TRACK_VARS_ENV]), ZEND_STRL("DOCUMENT_ROOT"));
@@ -349,24 +325,6 @@ static PHP_RINIT_FUNCTION(chuid)
 				}
 			}
 		}
-#else
-		if (http_globals[TRACK_VARS_ENV]) {
-			zval** var;
-			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_ENV]->value.ht, "DOCUMENT_ROOT", sizeof("DOCUMENT_ROOT"), (void **)&var) && IS_STRING == Z_TYPE_PP(var)) {
-				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
-					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
-					Z_STRLEN_PP(var) -= len;
-				}
-			}
-
-			if (SUCCESS == zend_hash_find(http_globals[TRACK_VARS_ENV]->value.ht, "SCRIPT_FILENAME", sizeof("SCRIPT_FILENAME"), (void **)&var) && IS_STRING == Z_TYPE_PP(var)) {
-				if (!strncmp(Z_STRVAL_PP(var), root, len)) {
-					memmove(Z_STRVAL_PP(var), Z_STRVAL_PP(var)+len, Z_STRLEN_PP(var)-len+1);
-					Z_STRLEN_PP(var) -= len;
-				}
-			}
-		}
-#endif
 	}
 
 	return SUCCESS;
@@ -450,11 +408,9 @@ static PHP_MINFO_FUNCTION(chuid)
  */
 static ZEND_MODULE_POST_ZEND_DEACTIVATE_D(chuid)
 {
-	TSRMLS_FETCH();
-
 	PHPCHUID_DEBUG("%s\n", "POST_ZEND_DEACTIVATE(chuid)");
 
-	deactivate(TSRMLS_C);
+	deactivate();
 	return SUCCESS;
 }
 

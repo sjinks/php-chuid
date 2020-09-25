@@ -45,10 +45,7 @@
 #include <main/php_ini.h>
 #include <Zend/zend_extensions.h>
 #include <main/SAPI.h>
-
-#if PHP_MAJOR_VERSION >= 7
-#	include <Zend/zend_string.h>
-#endif
+#include <Zend/zend_string.h>
 
 #ifdef HAVE_UNISTD_H
 #	include <unistd.h>
@@ -118,11 +115,7 @@ PHPCHUID_VISIBILITY_HIDDEN extern HashTable blacklisted_functions;
 PHPCHUID_VISIBILITY_HIDDEN extern uid_t uid_nobody;
 PHPCHUID_VISIBILITY_HIDDEN extern gid_t gid_nogroup;
 
-#if PHP_VERSION_ID >= 70000
 PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zval*);
-#else
-PHPCHUID_VISIBILITY_HIDDEN extern void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
-#endif
 
 /**
  * This one is required by php/main/internal_functions.c when chuid is built statically

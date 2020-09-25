@@ -7,12 +7,10 @@
 
 #include <assert.h>
 #include <grp.h>
+#include <Zend/zend.h>
+#include <Zend/zend_string.h>
 #include "helpers.h"
 #include "caps.h"
-
-#if PHP_MAJOR_VERSION >= 7
-#	include <Zend/zend_string.h>
-#endif
 
 int sapi_is_cli       = -1; /**< Whether SAPI is CLI */
 int sapi_is_cgi       = -1; /**< Whether SAPI is CGI */
@@ -30,11 +28,7 @@ HashTable blacklisted_functions;
  * @brief Saved @c zend_execute_internal()
  * @note Initialized in @c disable_posix_setuids() and restored in @c zm_shutdown_chuid() only if <code>CHUID_G(disable_setuid)</code> is not zero.
  */
-#if PHP_VERSION_ID >= 70000
 void (*old_execute_internal)(zend_execute_data*, zval*);
-#else
-void (*old_execute_internal)(zend_execute_data*, zend_fcall_info*, int TSRMLS_DC);
-#endif
 
 /**
  * @brief @c nobody user ID
@@ -51,46 +45,23 @@ gid_t gid_nogroup = 65534;
  * @param execute_data_ptr Zend Execute Data
  * @param return_value_used Whether the return value is used
  */
-static void chuid_execute_internal(
-	zend_execute_data* execute_data_ptr,
-#if PHP_VERSION_ID >= 70000
-	zval* return_value
-#else
-	zend_fcall_info* fci,
-	int return_value_used
-	TSRMLS_DC
-#endif
-)
+static void chuid_execute_internal(zend_execute_data* execute_data_ptr, zval* return_value)
 {
-#if PHP_MAJOR_VERSION >= 7
 	zend_string* fname   = execute_data_ptr->func->common.function_name;
 	zend_class_entry* ce = execute_data_ptr->func->common.scope;
-#else
-	const char* lcname   = ((zend_internal_function*)execute_data_ptr->function_state.function)->function_name;
-	size_t lcname_len    = lcname ? strlen(lcname) : 0;
-	zend_class_entry* ce = ((zend_internal_function*)execute_data_ptr->function_state.function)->scope;
-#endif
 
 	if (NULL == ce && 0 != CHUID_G(disable_setuid)) {
 		int res;
-#if PHP_MAJOR_VERSION >= 7
 		res = fname ? zend_hash_exists(&blacklisted_functions, fname) : 0;
-#else
-		res = lcname ? zend_hash_exists(&blacklisted_functions, lcname, lcname_len+1) : 0;
-#endif
 
 		if (0 != res) {
-			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+			zend_error(E_ERROR, "%s() has been disabled for security reasons", get_active_function_name());
 			zend_bailout();
 			return;
 		}
 	}
 
-#if PHP_VERSION_ID >= 70000
 	old_execute_internal(execute_data_ptr, return_value);
-#else
-	old_execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
-#endif
 }
 
 int my_setuids(uid_t ruid, uid_t euid, enum change_xid_mode_t mode)
@@ -119,17 +90,12 @@ int my_setgids(gid_t rgid, gid_t egid, enum change_xid_mode_t mode)
  * functions are also disabled, because @c seteuid() changes only the effective UID,
  * not the real one, and it is Real UID that affects those functions' behavior
  */
-void disable_posix_setuids(TSRMLS_D)
+void disable_posix_setuids()
 {
 	if (0 != CHUID_G(disable_setuid)) {
-#if PHP_MAJOR_VERSION >= 7
 		zval dummy;
 		ZVAL_LONG(&dummy, 1);
-#else
-		unsigned long int dummy = 0;
-#endif
 		zend_hash_init(&blacklisted_functions, 8, NULL, NULL, 1);
-#if PHP_MAJOR_VERSION >= 7
 		zend_hash_str_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid")-1,     &dummy);
 		zend_hash_str_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid")-1,     &dummy);
 		zend_hash_str_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid")-1,      &dummy);
@@ -137,15 +103,6 @@ void disable_posix_setuids(TSRMLS_D)
 		zend_hash_str_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority")-1, &dummy);
 		zend_hash_str_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill")-1,        &dummy);
 		zend_hash_str_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice")-1,         &dummy);
-#else
-		zend_hash_add(&blacklisted_functions, "posix_setegid",     sizeof("posix_setegid"),     &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_seteuid",     sizeof("posix_seteuid"),     &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_setgid",      sizeof("posix_setgid"),      &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_setuid",      sizeof("posix_setuid"),      &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "pcntl_setpriority", sizeof("pcntl_setpriority"), &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "posix_kill",        sizeof("posix_kill"),        &dummy, sizeof(dummy), NULL);
-		zend_hash_add(&blacklisted_functions, "proc_nice",         sizeof("proc_nice"),         &dummy, sizeof(dummy), NULL);
-#endif
 
 		old_execute_internal = zend_execute_internal;
 		if (NULL == old_execute_internal) {
@@ -160,7 +117,7 @@ void disable_posix_setuids(TSRMLS_D)
  * @note If the call to @c chroot() succeeds, the function immediately <code>chdir()</code>'s to the target directory
  * @note @c root must begin with <code>/</code> — the path must be absolute
  */
-int do_chroot(const char* root TSRMLS_DC)
+int do_chroot(const char* root)
 {
 	if (root && *root && '/' == *root) {
 		int res;
@@ -176,7 +133,7 @@ int do_chroot(const char* root TSRMLS_DC)
 /**
  * Sets Real and Effective UIDs to @c uid, Real and Effective GIDs to @c gid, Saved UID and GID to 0
  */
-int set_guids(uid_t uid, gid_t gid TSRMLS_DC)
+int set_guids(uid_t uid, gid_t gid)
 {
 	int res;
 	enum change_xid_mode_t mode = CHUID_G(mode);
@@ -219,24 +176,18 @@ static SAPI_INPUT_FILTER_FUNC(dummy_input_filter)
  * If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
  * If default UID is 65534, UID and GID are set to @c nobody and @c nogroup
  */
-void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
+void get_docroot_guids(uid_t* uid, gid_t* gid)
 {
 	char* docroot = NULL;
 	char* docroot_corrected;
 	int res;
 	struct stat statbuf;
-#if PHP_MAJOR_VERSION >= 7
 	zval server;
-#else
-	zval* server = NULL;
-#endif
 
 	assert(uid != NULL);
 	assert(gid != NULL);
 
-#if PHP_MAJOR_VERSION >= 7
 	ZVAL_UNDEF(&server);
-#endif
 
 	*gid = (gid_t)CHUID_G(default_gid);
 	*uid = (uid_t)CHUID_G(default_uid);
@@ -247,14 +198,17 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	}
 
 	if (NULL != sapi_module.getenv) {
-		docroot = sapi_module.getenv(ZEND_STRL("DOCUMENT_ROOT") TSRMLS_CC);
+		docroot = sapi_module.getenv(ZEND_STRL("DOCUMENT_ROOT"));
 	}
 
 	if (NULL == docroot && NULL != sapi_module.register_server_variables) {
-#if PHP_MAJOR_VERSION >= 7
 		zval* value;
 		zval old_server = PG(http_globals)[TRACK_VARS_SERVER];
+#if PHP_MAJOR_VERSION >= 8
+		unsigned int (*orig_input_filter)(int, const char*, char**, size_t, size_t*) = sapi_module.input_filter;
+#else
 		unsigned int (*orig_input_filter)(int, char*, char**, size_t, size_t*) = sapi_module.input_filter;
+#endif
 		sapi_module.input_filter = dummy_input_filter;
 
 		array_init(&server);
@@ -268,41 +222,11 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 		}
 
 		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
-#else
-		zval** value;
-		zval* old_server = PG(http_globals)[TRACK_VARS_SERVER];
-		unsigned int (*orig_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = sapi_module.input_filter;
-		sapi_module.input_filter = dummy_input_filter;
-
-		MAKE_STD_ZVAL(server);
-		array_init(server);
-		PG(http_globals)[TRACK_VARS_SERVER] = server;
-
-		sapi_module.register_server_variables(server TSRMLS_CC);
-
-		sapi_module.input_filter = orig_input_filter;
-
-		if (SUCCESS == zend_hash_quick_find(Z_ARRVAL_P(server), ZEND_STRS("DOCUMENT_ROOT"), zend_inline_hash_func(ZEND_STRS("DOCUMENT_ROOT")), (void**)&value)) {
-			if (Z_TYPE_PP(value) == IS_STRING) {
-				docroot = Z_STRVAL_PP(value);
-			}
-		}
-
-		PG(http_globals)[TRACK_VARS_SERVER] = old_server;
-#endif
 	}
 
 	if (NULL == docroot) {
 		PHPCHUID_ERROR(E_WARNING, "%s", "Cannot get DOCUMENT_ROOT");
-
-#if PHP_MAJOR_VERSION >= 7
 		zval_ptr_dtor(&server);
-#else
-		if (server) {
-			zval_ptr_dtor(&server);
-		}
-#endif
-
 		return;
 	}
 
@@ -311,25 +235,11 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 	res = stat(docroot_corrected, &statbuf);
 	if (0 != res) {
 		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
-
-#if PHP_MAJOR_VERSION >= 7
 		zval_ptr_dtor(&server);
-#else
-		if (server) {
-			zval_ptr_dtor(&server);
-		}
-#endif
-
 		return;
 	}
 
-#if PHP_MAJOR_VERSION >= 7
 	zval_ptr_dtor(&server);
-#else
-	if (server) {
-		zval_ptr_dtor(&server);
-	}
-#endif
 
 	if (CHUID_G(never_root)) {
 		if (0 != statbuf.st_uid) {
@@ -349,7 +259,7 @@ void get_docroot_guids(uid_t* uid, gid_t* gid TSRMLS_DC)
 /**
  * If the module is active, sets back the original UID/GID and depending on the ini settings, escapes the chroot.
  */
-void deactivate(TSRMLS_D)
+void deactivate()
 {
 	PHPCHUID_DEBUG("%s\n", "deactivate");
 
@@ -390,14 +300,10 @@ void deactivate(TSRMLS_D)
 	}
 }
 
-zend_bool chuid_is_auto_global(const char* name, size_t len TSRMLS_DC)
+zend_bool chuid_is_auto_global(const char* name, size_t len)
 {
-#if PHP_MAJOR_VERSION >= 7
 	zend_string* n = zend_string_init(name, len, 0);
-	zend_bool res  = zend_is_auto_global(n TSRMLS_CC);
+	zend_bool res  = zend_is_auto_global(n);
 	zend_string_release(n);
 	return res;
-#else
-	return zend_is_auto_global(name, len TSRMLS_CC);
-#endif
 }

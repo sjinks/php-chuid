@@ -41,8 +41,6 @@ static int chuid_zend_startup(zend_extension* extension)
  */
 static void chuid_zend_activate(void)
 {
-	TSRMLS_FETCH();
-
 	PHPCHUID_DEBUG("%s\n", "zend_activate");
 
 	if (1 == CHUID_G(active)) {
@@ -50,7 +48,7 @@ static void chuid_zend_activate(void)
 		gid_t gid;
 
 		/* We must get UID and GID before chrooting */
-		get_docroot_guids(&uid, &gid TSRMLS_CC);
+		get_docroot_guids(&uid, &gid);
 
 		if (CHUID_G(per_req_chroot) && !sapi_is_cli) {
 			CHUID_G(chrooted) = 0;
@@ -59,18 +57,18 @@ static void chuid_zend_activate(void)
 			 * ZEND_ACTIVATE. SAPI Activate sets per-directory INI settings, and chroot()'ing in the RINIT phase is too late.
 			 */
 			if (sapi_module.activate) {
-				sapi_module.activate(TSRMLS_C);
+				sapi_module.activate();
 			}
 
 			if (CHUID_G(run_sapi_deactivate) && sapi_module.deactivate) {
-				sapi_module.deactivate(TSRMLS_C);
+				sapi_module.deactivate();
 			}
 
 			char* root = CHUID_G(req_chroot);
 			PHPCHUID_DEBUG("Per-request root is \"%s\"\n", root);
 
 			if (root && *root && '/' == *root) {
-				int res  = do_chroot(root TSRMLS_CC);
+				int res  = do_chroot(root);
 				char* pt = SG(request_info).path_translated;
 				if (FAILURE == res) {
 					return;
@@ -96,7 +94,7 @@ static void chuid_zend_activate(void)
 			CHUID_G(active) = 0;
 		}
 
-		set_guids(uid, gid TSRMLS_CC);
+		set_guids(uid, gid);
 
 		PHPCHUID_DEBUG("UID: %d, GID: %d\n", getuid(), getgid());
 	}
