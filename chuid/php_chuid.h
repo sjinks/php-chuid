@@ -1,7 +1,7 @@
 /**
  * @file php_chuid.h
  * @author Volodymyr Kolesnykov <volodymyr@wildwolf.name>
- * @version 0.6.0
+ * @version 1.0.0
  * @brief Common include file
  */
 
@@ -18,7 +18,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "0.6.3"
+#define PHP_CHUID_EXTVER    "1.0.0"
 
 /**
  * @headerfile php_chuid.h

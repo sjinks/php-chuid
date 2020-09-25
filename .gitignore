@@ -23,6 +23,7 @@ config.status
 config.sub
 configure
 configure.in
+configure.ac
 install-sh
 libtool
 ltmain.sh
@@ -30,15 +31,6 @@ missing
 mkinstalldirs
 run-tests.php
 macros.h
-.cproject
-.project
-/debian/chuid.ini
-/debian/files
-/debian/php5-chuid-dbg.*
-/debian/php5-chuid-dbg/
-/debian/php5-chuid.*.log
-/debian/php5-chuid.substvars
-/debian/php5-chuid/
 /tests/*.diff
 /tests/*.exp
 /tests/*.log
