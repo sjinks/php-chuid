@@ -1,4 +1,6 @@
-# PHP CHUID [![Build Status](https://travis-ci.org/sjinks/php-chuid.svg?branch=master)](https://travis-ci.org/sjinks/php-chuid)
+# PHP CHUID
+
+[![Build and Test](https://github.com/sjinks/php-chuid/actions/workflows/test.yml/badge.svg)](https://github.com/sjinks/php-chuid/actions/workflows/test.yml)
 
 PHP CHUID (CHange User ID) is a PHP extension that allows one to run PHP CLI/CGI/FastCGI binary as the owner of the DocumentRoot
 by changing UID/GID upon request start and reverting to the original UID/GID when the request finishes.
