@@ -40,6 +40,9 @@ jobs:
       - name: Install build dependencies
         run: sudo apt-get -qq update && sudo apt-get -qq install libcap-dev libcap-ng-dev
 
+      - name: Add error matcher
+        run: echo "::add-matcher::$(pwd)/.github/problem-matcher-gcc.json"
+
       - name: Build
         run: phpize && ./configure ${{ matrix.features }} --silent && make --silent
         working-directory: chuid
