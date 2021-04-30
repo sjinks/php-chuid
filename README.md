@@ -3,13 +3,15 @@
 PHP CHUID (CHange User ID) is a PHP extension that allows one to run PHP CLI/CGI/FastCGI binary as the owner of the DocumentRoot
 by changing UID/GID upon request start and reverting to the original UID/GID when the request finishes.
 
-CHUID can be seen as an alternative to php-fpm: you won't need many worker processes if you have a lot of users.
-This is because CHUID dynamically changes process UID/GID and therefore it can reuse processes without having to spawn a new process
+CHUID can be seen as an alternative to php-fpm: you won't need many worker processes if you have many users,
+because CHUID dynamically changes process UID/GID, and therefore it can reuse processes without having to spawn a new child
 for the new user.
+
+Tested with: PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1
 
 ## Installation
 
-First you will need to build the extension:
+First, you will need to build the extension:
 
 ```bash
 sudo apt-get install php5-dev libcap-dev build-essential autoconf
@@ -19,7 +21,7 @@ make
 sudo make install
 ```
 
-Then you need to install it. There are two ways of doing this: install CHUID as a PHP extension or as a Zend extension.
+Then you need to install it. There are two ways to do that: either install CHUID as a PHP extension or as a Zend extension.
 
 PHP extension: add this line to your php.ini:
 
@@ -38,10 +40,9 @@ zend_extension=/path/to/zend/extension/dir/chuid.so
 **WARNING:** for CHUID to work properly, php must be run as `root` user. Note that PHP will **not** handle requests as `root` — all privileges are dropped
 during `zend_activate` phase (this happens **before** the request is processed) and restored during `zend_post_deactivate` phase (**after** the request has been processed).
 
-The extension lifetime is better explained by this picture: https://wiki.php.net/_media/internals/extensions_lifetime.png
+[This picture](https://wiki.php.net/_media/internals/extensions_lifetime.png) better explains the extension lifetime.
 
-All privileges are dropped during `activate()` phase and restored during `post_deactivate_func()` phase.
-
+All privileges are dropped during the `activate()` phase and restored during the `post_deactivate_func()` phase.
 
 ## INI settings
 
@@ -75,6 +76,6 @@ All privileges are dropped during `activate()` phase and restored during `post_d
   * `chuid.chroot_to`: per-request chroot, used only when `chuid.enable_per_request_chroot` is enabled
     * string, empty by default
     * PHP_INI_SYSTEM | PHP_INI_PER_DIR
-  * `chuid.run_sapi_deactivate`: Whether to run SAPI deactivate function after calling SAPI activate to get per directory settings
+  * `chuid.run_sapi_deactivate`: Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings
     * boolean, defaults to 1
     * PHP_INI_SYSTEM | PHP_INI_PER_DIR
