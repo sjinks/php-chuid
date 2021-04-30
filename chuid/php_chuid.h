@@ -18,7 +18,7 @@
  * @headerfile php_chuid.h
  * @brief Extension version
  */
-#define PHP_CHUID_EXTVER    "1.0.0"
+#define PHP_CHUID_EXTVER    "1.1.0"
 
 /**
  * @headerfile php_chuid.h
@@ -35,7 +35,7 @@
 /**
  * @headerfile php_chuid.h
  */
-#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2016"
+#define PHP_CHUID_COPYRIGHT "Copyright (c) 2009-2021"
 
 #ifdef HAVE_CONFIG_H
 #	include "config.h"
