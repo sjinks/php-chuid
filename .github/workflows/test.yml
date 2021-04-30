@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  CFLAGS: "-O2 -Wall -Werror"
+  CFLAGS: "-O2 -Wall -Werror -std=c11"
 
 jobs:
   ci:
