@@ -1,0 +1,55 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+env:
+  CFLAGS: "-O2 -Wall -Werror"
+
+jobs:
+  ci:
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
+    strategy:
+      fail-fast: true
+      matrix:
+        compiler:
+          - CC: clang
+          - CC: gcc
+        php:
+          - '7.0'
+          - '7.1'
+          - '7.2'
+          - '7.3'
+          - '7.4'
+          - '8.0'
+          - '8.1'
+        features:
+          - "--with-cap --without-capng"
+          - "--without-cap --with-capng"
+    name: "Build and Test (PHP ${{ matrix.php }}, CC: ${{ matrix.compiler.CC }})"
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Check out the source code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: none
+
+      - name: Install build dependencies
+        run: sudo apt-get -qq update && sudo apt-get -qq install libcap-dev libcap-ng-dev
+
+      - name: Build
+        run: phpize && ./configure CC=${{ matrix.compiler.CC }} ${{ matrix.features }} --silent && make --silent
+        working-directory: chuid
+
+      - name: Run tests
+        run: sudo make test
+        env:
+          NO_INTERACTION: "1"
+          REPORT_EXIT_STATUS: "1"
+        working-directory: chuid
