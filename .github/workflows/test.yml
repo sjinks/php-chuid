@@ -15,18 +15,18 @@ jobs:
       fail-fast: true
       matrix:
         php:
-          - '7.0'
           - '7.1'
           - '7.2'
           - '7.3'
           - '7.4'
           - '8.0'
           - '8.1'
+          - '8.2'
         features:
           - "--with-cap --without-capng"
           - "--without-cap --with-capng"
     name: "Build and Test (PHP ${{ matrix.php }}, ${{ matrix.features }})"
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Check out the source code
         uses: actions/checkout@v2
