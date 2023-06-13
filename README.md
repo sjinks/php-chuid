@@ -9,7 +9,7 @@ CHUID can be seen as an alternative to php-fpm: you won't need many worker proce
 because CHUID dynamically changes process UID/GID, and therefore it can reuse processes without having to spawn a new child
 for the new user.
 
-Tested with: PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1
+Tested with: PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2
 
 ## Installation
 

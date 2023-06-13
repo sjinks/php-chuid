@@ -1,5 +1,7 @@
 --TEST--
 CLI: UID == EUID == SUID == FSUID, GID == EGID == SGID == FSGID
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=1
 chuid.cli_disable=0

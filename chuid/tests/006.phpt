@@ -1,5 +1,7 @@
 --TEST--
 CLI: posix_setuid() cannot switch back to root
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=1
 chuid.cli_disable=0
