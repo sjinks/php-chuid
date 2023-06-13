@@ -1,5 +1,7 @@
 --TEST--
 Root when chuid is disabled
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=0
 --SKIPIF--

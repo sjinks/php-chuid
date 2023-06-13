@@ -47,8 +47,17 @@ jobs:
         run: phpize && ./configure ${{ matrix.features }} --silent && make --silent
         working-directory: chuid
 
+      - name: Copy posix extension
+        run: |
+          if [ -f "$(php-config --extension-dir)/posix.so" ]; then
+            cp $(php-config --extension-dir)/posix.so chuid/modules
+          fi
+
+      - name: Set DOCUMENT_ROOT for CGI tests
+        run: echo "DOCUMENT_ROOT=$(pwd)/chuid" >> "${GITHUB_ENV}"
+
       - name: Run tests
-        run: sudo make test
+        run: sudo -E make test
         env:
           NO_INTERACTION: "1"
           REPORT_EXIT_STATUS: "1"

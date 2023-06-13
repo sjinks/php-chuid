@@ -1,5 +1,7 @@
 --TEST--
 Default UID and GID
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=1
 chuid.cli_disable=0

@@ -1,5 +1,7 @@
 --TEST--
 CGI: UID == EUID == FSUID, GID == EGID == FSGID, SUID == 0, SGID == 0
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=1
 chuid.default_uid=65534

@@ -1,5 +1,7 @@
 --TEST--
 CGI: posix_seteuid() can switch back to root
+--EXTENSIONS--
+posix
 --INI--
 chuid.enabled=1
 chuid.default_uid=65534
