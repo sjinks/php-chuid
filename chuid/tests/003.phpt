@@ -13,8 +13,10 @@ dummy=1
 --SKIPIF--
 <?php
 require 'skipif.inc';
-$root = $_SERVER['DOCUMENT_ROOT'];
-if (fileowner($root) !== 0 || filegroup($root) !== 0) die('SKIP this test makes sense only for root-owned document root');
+if (isset($_SERVER['DOCUMENT_ROOT'])) {
+    $root = $_SERVER['DOCUMENT_ROOT'];
+    if (fileowner($root) !== 0 || filegroup($root) !== 0) die('SKIP this test makes sense only for root-owned document root');
+}
 ?>
 --FILE--
 <?php
@@ -24,9 +26,6 @@ var_dump(posix_getgid() == $user['gid']);
 
 var_dump(posix_getuid() == posix_geteuid());
 var_dump(posix_getgid() == posix_getegid());
-
-echo posix_getuid(), $user['uid'], PHP_EOL;
-
 ?>
 --EXPECT--
 bool(true)

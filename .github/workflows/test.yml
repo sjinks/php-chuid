@@ -53,6 +53,12 @@ jobs:
             cp $(php-config --extension-dir)/posix.so chuid/modules
           fi
 
+      - name: Update PHP test runner if necessary
+        run: |
+          if ! php -r 'exit((int)(PHP_VERSION_ID < 80200));'; then
+            cp -f helpers/run-tests.php chuid/run-tests.php
+          fi
+
       - name: Set DOCUMENT_ROOT for CGI tests
         run: echo "DOCUMENT_ROOT=$(pwd)/chuid" >> "${GITHUB_ENV}"
 
