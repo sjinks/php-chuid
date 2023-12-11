@@ -2,28 +2,25 @@
 
 [![Build and Test](https://github.com/sjinks/php-chuid/actions/workflows/test.yml/badge.svg)](https://github.com/sjinks/php-chuid/actions/workflows/test.yml)
 
-PHP CHUID (CHange User ID) is a PHP extension that allows one to run PHP CLI/CGI/FastCGI binary as the owner of the DocumentRoot
-by changing UID/GID upon request start and reverting to the original UID/GID when the request finishes.
+PHP CHUID (CHange User ID) is a PHP extension that allows one to run PHP CLI/CGI/FastCGI binary as the owner of the DocumentRoot by changing UID/GID upon request start and reverting to the original UID/GID when the request finishes.
 
-CHUID can be seen as an alternative to php-fpm: you won't need many worker processes if you have many users,
-because CHUID dynamically changes process UID/GID, and therefore it can reuse processes without having to spawn a new child
-for the new user.
+CHUID can be seen as an alternative to php-fpm: you won't need many worker processes if you have many users because CHUID dynamically changes process UID/GID, and therefore, it can reuse processes without having to spawn a new child for the new user.
 
-Tested with: PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2
+It was tested with PHP 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, and 8.4 nightly.
 
 ## Installation
 
 First, you will need to build the extension:
 
 ```bash
-sudo apt-get install php5-dev libcap-dev build-essential autoconf
+sudo apt-get install php8.3-dev libcap-dev build-essential autoconf
 phpize
 ./configure
 make
 sudo make install
 ```
 
-Then you need to install it. There are two ways to do that: either install CHUID as a PHP extension or as a Zend extension.
+Then you need to install it. There are two ways to do that: install CHUID as a PHP or Zend extension.
 
 PHP extension: add this line to your php.ini:
 
@@ -39,7 +36,7 @@ zend_extension=/path/to/zend/extension/dir/chuid.so
 
 `/path/to/zend/extension/dir/` can be found by running `php-config --extension-dir`
 
-**WARNING:** for CHUID to work properly, php must be run as `root` user. Note that PHP will **not** handle requests as `root` — all privileges are dropped
+**WARNING:** For CHUID to work properly, php must be run as a `root` user. Note that PHP will **not** handle requests as `root` — all privileges are dropped
 during `zend_activate` phase (this happens **before** the request is processed) and restored during `zend_post_deactivate` phase (**after** the request has been processed).
 
 [This picture](https://wiki.php.net/_media/internals/extensions_lifetime.png) better explains the extension lifetime.
