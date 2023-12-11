@@ -1,8 +1,6 @@
 name: Build and Test
 on:
   push:
-    branches:
-      - "**"
   workflow_dispatch:
 
 env:
@@ -22,6 +20,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - 'nightly'
         features:
           - "--with-cap --without-capng"
           - "--without-cap --with-capng"
