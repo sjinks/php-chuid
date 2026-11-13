@@ -10,16 +10,15 @@ jobs:
   ci:
     permissions:
       contents: read
-    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
         php:
-          - '7.4'
-          - '8.0'
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
+          - '8.5'
           - 'nightly'
         features:
           - "--with-cap --without-capng"
@@ -50,12 +49,6 @@ jobs:
         run: |
           if [ -f "$(php-config --extension-dir)/posix.so" ]; then
             cp $(php-config --extension-dir)/posix.so chuid/modules
-          fi
-
-      - name: Update PHP test runner if necessary
-        run: |
-          if ! php -r 'exit((int)(PHP_VERSION_ID < 80200));'; then
-            cp -f helpers/run-tests.php chuid/run-tests.php
           fi
 
       - name: Set DOCUMENT_ROOT for CGI tests
