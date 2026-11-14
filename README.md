@@ -74,7 +74,7 @@ All privileges are dropped during the `activate()` phase and restored during the
     * PHP_INI_SYSTEM
   * `chuid.chroot_to`: per-request chroot, used only when `chuid.enable_per_request_chroot` is enabled
     * string, empty by default
-    * PHP_INI_SYSTEM | PHP_INI_PER_DIR
+    * PHP_INI_SYSTEM
   * `chuid.run_sapi_deactivate`: Whether to run SAPI deactivate function after calling SAPI activate to get per-directory settings
     * boolean, defaults to 1
     * PHP_INI_SYSTEM | PHP_INI_PER_DIR
