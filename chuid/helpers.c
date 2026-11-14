@@ -6,7 +6,9 @@
  */
 
 #include <assert.h>
+#include <fcntl.h>
 #include <grp.h>
+#include <sys/stat.h>
 #include <Zend/zend.h>
 #include <Zend/zend_string.h>
 #include "helpers.h"
@@ -172,15 +174,84 @@ static SAPI_INPUT_FILTER_FUNC(dummy_input_filter)
 }
 
 /**
+ * Opens a directory without following symlinks in any path component.
+ *
+ * @param path Directory path
+ * @return Open directory descriptor, or -1 on failure
+ */
+static int open_directory_no_symlinks(const char* path)
+{
+	const char* component = path;
+	int flags = O_RDONLY;
+	int fd;
+
+#ifdef O_CLOEXEC
+	flags |= O_CLOEXEC;
+#endif
+#ifdef O_DIRECTORY
+	flags |= O_DIRECTORY;
+#endif
+
+	fd = open('/' == *path ? "/" : ".", flags);
+	if (fd < 0) {
+		return -1;
+	}
+
+	while (*component) {
+		const char* end;
+		char* name;
+		size_t len;
+		int next_fd;
+		int saved_errno;
+
+		while ('/' == *component) {
+			++component;
+		}
+
+		if (!*component) {
+			break;
+		}
+
+		end = component;
+		while (*end && '/' != *end) {
+			++end;
+		}
+
+		len = (size_t)(end - component);
+		name = emalloc(len + 1);
+		memcpy(name, component, len);
+		name[len] = 0;
+
+		next_fd = openat(fd, name, flags | O_NOFOLLOW);
+		saved_errno = errno;
+		efree(name);
+		close(fd);
+
+		if (next_fd < 0) {
+			errno = saved_errno;
+			return -1;
+		}
+
+		fd = next_fd;
+		component = end;
+	}
+
+	return fd;
+}
+
+/**
  * Tries to get UID and GID of the owner of the @c DOCUMENT_ROOT.
- * If @c stat() fails on the @c DOCUMENT_ROOT or @c DOCUMENT_ROOT is not set, defaults are used.
+ * If the @c DOCUMENT_ROOT cannot be opened without following symlinks, is not a directory,
+ * or is not set, defaults are used.
  * If default UID is 65534, UID and GID are set to @c nobody and @c nogroup
  */
 void get_docroot_guids(uid_t* uid, gid_t* gid)
 {
 	char* docroot = NULL;
 	char* docroot_corrected;
+	int docroot_fd;
 	int res;
+	int saved_errno;
 	struct stat statbuf;
 	zval server;
 
@@ -232,9 +303,23 @@ void get_docroot_guids(uid_t* uid, gid_t* gid)
 
 	docroot_corrected = (*docroot) ? docroot : "/";
 
-	res = stat(docroot_corrected, &statbuf);
+	docroot_fd = open_directory_no_symlinks(docroot_corrected);
+	if (docroot_fd < 0) {
+		PHPCHUID_ERROR(E_WARNING, "Cannot securely open DOCUMENT_ROOT %s: %s", docroot_corrected, strerror(errno));
+		zval_ptr_dtor(&server);
+		return;
+	}
+
+	res = fstat(docroot_fd, &statbuf);
+	if (0 == res && !S_ISDIR(statbuf.st_mode)) {
+		errno = ENOTDIR;
+		res = -1;
+	}
+	saved_errno = errno;
+	close(docroot_fd);
 	if (0 != res) {
-		PHPCHUID_ERROR(E_WARNING, "stat(%s): %s", docroot_corrected, strerror(errno));
+		errno = saved_errno;
+		PHPCHUID_ERROR(E_WARNING, "fstat(%s): %s", docroot_corrected, strerror(errno));
 		zval_ptr_dtor(&server);
 		return;
 	}
