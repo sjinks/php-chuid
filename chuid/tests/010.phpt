@@ -7,7 +7,7 @@ chuid.default_gid=0
 chuid.never_root=0
 error_reporting=E_ALL & ~E_WARNING
 --ENV--
-DOCUMENT_ROOT=/proc/self/cwd
+DOCUMENT_ROOT={PWD}/../test-fixtures/document-root-link
 --GET--
 dummy=1
 --FILE--
